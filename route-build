@@ -1,0 +1,57 @@
+{
+  "pages": [
+    "pages/index/index",
+
+  ]
+}
+
+export default [
+  {
+    path: '/xxxx',
+    name: 'xxx',
+    component: () => import('@/views/xxxx'),
+    meta: {
+      title: 'xxxx'
+    }
+  }
+]
+
+export default [
+  {
+    path: '/xxx',
+    component: React.lazy(() => import("@/pages/xxx"))
+  }
+]
+
+const mapWx = `
+  [
+    #start
+    {
+      path: '/#alias',
+      component: React.lazy(() => import("@/#pagePath/#alias/#alias"))
+    }
+    #end
+  ]
+`
+
+const replaceReg = /(?<=#start)[\d\D]*(?=#end)/g;
+
+const replaceStr = mapWx.match(replaceReg)[0];
+
+const pages = [
+  { title: '登录', name: 'login' },
+  { title: '首页', name: 'index' },
+  { title: '个人中心', name: 'person' },
+  { title: '发现', name: 'find' }
+]
+
+const generateStr = pages.reduce((sum, cur) => {
+  let _str = replaceStr;
+  _str = _str.replace(/#name/g, cur.name);
+  _str = _str.replace(/#title/g, cur.title);
+  return sum + _str;
+}, '')
+
+const result = mapWx.replace(/(#start)[\d\D]*(#end)/g, generateStr).replace(/#pagePath/g, 'page');
+
+console.log(result);

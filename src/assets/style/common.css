@@ -1,0 +1,47 @@
+:root {
+  --page-bg: #0f0f21;
+  --block-bg: #15152f;
+  --dark-stress-bg: rgb(26, 26, 54);
+  --stress-bg: #2e2e54;
+  --dark-border: #7e7eb8;
+  --l-txt: #ffffff;
+  --primary-color: #afafff;
+  --error-color: rgb(225,23,129);
+}
+
+.block-wrap {
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--block-bg);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--stress-bg);
+}
+
+.ani-rotate {
+  font-size: 0;
+  line-height: 1;
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
