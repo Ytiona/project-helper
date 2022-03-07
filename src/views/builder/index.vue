@@ -1,17 +1,23 @@
 <template>
   <div class="main">
-    <Analysis class="row-1 block analysis">
+    <FileChoose :filters="[{ name: 'PSD文件', extensions: 'psd' }]" empty-tips="拖入文件夹/PSD文件">
       <template v-slot:top-right>
         <Button icon="setting-fill" @click="configVisbile = true">构建配置</Button>
       </template>
-      <template v-slot:psd-item="{data, remove}">
-        <PsdCard :data="data" :remove="remove"></PsdCard>
+      <template v-slot:file-list="{ fileList, chooseFile, removeFile }">
+        <div class="file-list">
+          <!-- todo: 集成psd解析模块 -->
+          <PsdCard 
+            v-for="(item, index) in fileList"
+            :data="item" 
+            :remove="() => removeFile(index)"
+          ></PsdCard>
+          <div class="add-btn" @click="chooseFile()">
+            <i class="iconfont icon-add"></i>
+          </div>
+        </div>
       </template>
-    </Analysis>
-    <!-- <div class="row-2">
-      <TinyCompress class="tiny-compress block" v-if="openTinyCompress"/>
-      <Build class="build block"/>
-    </div> -->
+    </FileChoose>
   </div>
   <div class="footer">
     <div class="left">
@@ -31,20 +37,20 @@
   </div>
 
   <Modal v-model:show="configVisbile" title="构建配置" :width="800">
-    <Build class="build block"/>
+    <BuildConfig class="build block"/>
   </Modal>
 </template>
 
 <script setup>
 import { ref } from '@vue/reactivity';
-import Analysis from '@/core/analysis/index.vue';
-import TinyCompress from '@/core/tiny-compress/index.vue';
-import Build from '@/core/build/index.vue';
-import PsdCard from './psd-card.vue';
+import FileChoose from '@/components/file-choose';
+import BuildConfig from './components/build-config';
+import PsdCard from './components/psd-card';
 
 const openTinyCompress = ref(true);
 
 const configVisbile = ref(false);
+
 </script>
 
 <style lang="less" scoped>
@@ -74,6 +80,29 @@ const configVisbile = ref(false);
   }
   .build {
     flex: 1;
+  }
+}
+.file-list {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, 280px);
+  .add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px dashed currentColor;
+    border-radius: 10px;
+    color: var(--stress-bg);
+    cursor: pointer;
+    .iconfont {
+      font-size: 36px;
+    }
+    &:hover {
+      color: var(--primary-color);
+    }
   }
 }
 .footer {

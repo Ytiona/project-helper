@@ -324,5 +324,5 @@ function onDeleteFile(index, item) {
 </script>
 
 <style lang="less" scoped>
-@import './index.less';
+@import './build-config.less';
 </style>

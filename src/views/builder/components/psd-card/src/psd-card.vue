@@ -57,7 +57,9 @@ const targetTypes = [
   position: relative;
   display: flex;
   align-items: center;
+  height: 90px;
   padding: 10px;
+  box-sizing: border-box;
   border: 1px solid var(--stress-bg);
   border-radius: 10px;
   .file-icon {
