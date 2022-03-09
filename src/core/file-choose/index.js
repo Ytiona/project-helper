@@ -2,7 +2,7 @@
  * @Author: LiYu
  * @Date: 2022-03-06 22:59:47
  * @LastEditors: LiYu
- * @LastEditTime: 2022-03-07 23:05:12
+ * @LastEditTime: 2022-03-08 22:15:38
  * @Description: 
  */
 const remote = require('@electron/remote');
@@ -34,25 +34,25 @@ export default class FileChoose {
   }
 
   choose(openDirectory = false, multiSelections = true) {
-    return new Promise((resolve, reject) => {
-      remote.dialog.showOpenDialog({
-        properties: [
-          openDirectory ? 'openDirectory' : 'openFile',
-          multiSelections ? 'multiSelections' : null
-        ].filter(item => item),
-        filters: this.filters
-      }).then(({ canceled, filePaths }) => {
-        if(!canceled) {
-          this.fileList = this.fileList.concat(
-            this.repeatable ? 
-              filePaths : 
-              filePaths.filter(item => !this.uniqueFilePaths.has(item))
-          );
-          resolve(this.fileList);
-        } else {
-          reject({ errMsg: 'canceled' });
-        }
-      }, reject)
+    return remote.dialog.showOpenDialog({
+      properties: [
+        openDirectory ? 'openDirectory' : 'openFile',
+        multiSelections ? 'multiSelections' : null
+      ].filter(item => item),
+      filters: this.filters
+    }).then(({ canceled, filePaths }) => {
+      if(!canceled) {
+        this.fileList = this.fileList.concat(
+          this.repeatable ? filePaths : filePaths.filter(item => {
+            const result = !this.uniqueFilePaths.has(item);
+            this.uniqueFilePaths.add(item);
+            return result;
+          })
+        );
+        return this.fileList;
+      } else {
+        return Promise.reject({ errMsg: 'canceled' });
+      }
     })
   }
 
@@ -79,7 +79,7 @@ export default class FileChoose {
     }
     this.uniqueFilePaths.delete(this.fileList[index]);
     this.fileList.splice(index, 1);
-    return this.fileList;
+    return this.fileList = [...this.fileList];
   }
 
   

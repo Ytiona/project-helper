@@ -66,17 +66,17 @@ function clearAll() {
   margin-bottom: 10px;
   .left {
     display: flex;
-    width: 500px;
     .ly-input {
       flex: 1;
     }
     .ly-btn {
-      margin-left: 10px;
+      margin-right: 10px;
     }
   }
 }
 .block-wrap {
   flex: 1;
+  overflow: auto;
 }
 .empty {
   display: flex;

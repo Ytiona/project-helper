@@ -321,6 +321,11 @@ function onDeleteFile(index, item) {
   })
 }
 
+defineExpose({
+  currentBuildType,
+  currentOptions
+})
+
 </script>
 
 <style lang="less" scoped>

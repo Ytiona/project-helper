@@ -2,7 +2,7 @@
   <div class="modal">
     <transition name="bounce">
       <div class="modal-container" :style="{ width: props.width + 'px' }" v-show="_show">
-        <div class="head">
+        <div class="head" v-if="!headHide">
           <div class="title">
             <i v-if="titleIcon" :class="`iconfont icon-${titleIcon}`"></i>
             <span class="text">{{ props.title }}</span>
@@ -41,6 +41,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
     default: false,
+  },
+  headHide: {
+    type: Boolean,
+    default: false
   },
   footerHide: {
     type: Boolean,
@@ -156,12 +160,13 @@ function onClickMask() {
   left: 50%;
   transform: translate3d(-50%, -50%, 0);
   z-index: 1000;
-  padding: 14px 20px;
+  padding: 10px;
   border-radius: 6px;
   background: var(--stress-bg);
   animation: bounceIn 0.25s;
   .head {
     display: flex;
+    margin-bottom: 10px;
     .title {
       flex: 1;
       display: flex;
@@ -187,7 +192,6 @@ function onClickMask() {
     }
   }
   .content-container {
-    padding: 14px 0;
     .content {
       margin-bottom: 20px;
       padding: 20px;
@@ -198,6 +202,7 @@ function onClickMask() {
   .footer {
     display: flex;
     justify-content: flex-end;
+    margin-top: 10px;
     .btn {
       font-size: 14px;
       padding: 6px 30px;

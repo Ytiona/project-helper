@@ -1,16 +1,22 @@
 <template>
   <div class="main">
-    <FileChoose :filters="[{ name: 'PSD文件', extensions: 'psd' }]" empty-tips="拖入文件夹/PSD文件">
+    <FileChoose 
+      class="file-choose"
+      :filters="[{ name: 'PSD文件', extensions: 'psd' }]" 
+      empty-tips="拖入文件夹/PSD文件"
+    >
       <template v-slot:top-right>
         <Button icon="setting-fill" @click="configVisbile = true">构建配置</Button>
       </template>
       <template v-slot:file-list="{ fileList, chooseFile, removeFile }">
         <div class="file-list">
           <!-- todo: 集成psd解析模块 -->
-          <PsdCard 
+          <PsdCard
             v-for="(item, index) in fileList"
-            :data="item" 
+            :key="item"
+            :filePath="item" 
             :remove="() => removeFile(index)"
+            :ref="setPsdItems"
           ></PsdCard>
           <div class="add-btn" @click="chooseFile()">
             <i class="iconfont icon-add"></i>
@@ -23,13 +29,13 @@
     <div class="left">
       <div class="notice">正在压缩HOME:title.png</div>
       <div class="output-path">
-        <span class="path">输出路径：C:/User/dsew/gfg</span>
-        <span class="choose-btn">选择路径</span>
+        <span class="path">输出路径：{{ outputPath }}</span>
+        <span class="choose-btn" @click="onChooseOutputPath()">选择路径</span>
       </div>
     </div>
     <div class="right">
       <Checkbox v-model:value="openTinyCompress">开启Tiny压缩</Checkbox>
-      <span class="build-btn">
+      <span class="build-btn" @click="onBuild()">
         <i class="iconfont icon-build"></i>
         开始构建
       </span>
@@ -37,19 +43,73 @@
   </div>
 
   <Modal v-model:show="configVisbile" title="构建配置" :width="800">
-    <BuildConfig class="build block"/>
+    <BuildConfig class="build block" ref="buildConfig"/>
   </Modal>
+
+  <Modal 
+    v-model:show="buildLoading" 
+    footerHide 
+    headHide 
+    :closable="false" 
+    :width="240"
+    :maskClosable="false"
+  >
+    <div class="build-load">
+      <div class="ani-rotate load-icon">
+        <i class="iconfont icon-load"/>
+      </div>
+      <p class="desc">正在构建...</p>
+      <div class="cancel-btn">取消构建</div>
+    </div>
+  </Modal>
+
 </template>
 
 <script setup>
-import { ref } from '@vue/reactivity';
+import { ref } from 'vue';
 import FileChoose from '@/components/file-choose';
 import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
+import build from '@/core/builder';
+const remote = require('@electron/remote');
 
 const openTinyCompress = ref(true);
 
 const configVisbile = ref(false);
+
+const buildLoading = ref(false);
+const outputPath = ref('./project-helper/output');
+const buildConfig = ref(null);
+const psdItems = [];
+
+function setPsdItems(el) {
+  if(el) {
+    psdItems.push(el);
+  }
+}
+
+function onChooseOutputPath() {
+  remote.dialog.showOpenDialog({
+    properties: ['openDirectory']
+  }).then(({ canceled, filePaths }) => {
+    if(!canceled) {
+      outputPath.value = filePaths[0];
+    }
+  })
+}
+
+function onBuild() {
+  buildLoading.value = true;
+  Promise.allSettled(psdItems.map(item => {
+    return build({
+      psd: item.parsedPsd.psd,
+      output: outputPath.value,
+      config: buildConfig.value.currentOptions
+    })
+  })).finally(() => {
+    buildLoading.value = false;
+  })
+}
 
 </script>
 
@@ -58,27 +118,7 @@ const configVisbile = ref(false);
   padding: 20px;
   height: calc(100vh - 86px - 80px);
   display: flex;
-  flex-direction: column;
-  overflow: auto;
-  .block {
-    &:nth-child(1) {
-      grid-column: span 2;
-    }
-  }
-  .row-1 {
-    margin-bottom: 10px;
-  }
-  .row-2 {
-    display: flex;
-  }
-  .analysis {
-    flex: 1;
-  }
-  .tiny-compress {
-    flex: 0 0 300px;
-    margin-right: 10px;
-  }
-  .build {
+  .file-choose {
     flex: 1;
   }
 }
@@ -170,6 +210,33 @@ const configVisbile = ref(false);
     }
     &:hover {
       background: var(--dark-stress-bg);
+    }
+  }
+}
+.build-load {
+  overflow: hidden;
+  text-align: center;
+  color: var(--primary-color);
+  .icon-load {
+    font-size: 50px;
+  }
+  .desc {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .cancel-btn {
+    padding: 10px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    // box-shadow: 0 0 0 4px #414175, 0 0 0 6px #33335a;
+    border-radius: 6px;
+    color: var(--dark-stress-bg);
+    background: var(--primary-color);
+    cursor: pointer;
+    user-select: none;
+    &:hover {
+      color: var(--l-txt);
     }
   }
 }
