@@ -27,16 +27,12 @@ const mapWx = `
   [
     #start
     {
-      path: '/#alias',
-      component: React.lazy(() => import("@/#pagePath/#alias/#alias"))
+      path: '/#name',
+      component: React.lazy(() => import("@/#pagePath/#name/#name"))
     }
     #end
   ]
 `
-
-const replaceReg = /(?<=#start)[\d\D]*(?=#end)/g;
-
-const replaceStr = mapWx.match(replaceReg)[0];
 
 const pages = [
   { title: '登录', name: 'login' },
@@ -44,6 +40,10 @@ const pages = [
   { title: '个人中心', name: 'person' },
   { title: '发现', name: 'find' }
 ]
+
+const replaceReg = /(?<=#start)[\d\D]*(?=#end)/g;
+
+const replaceStr = mapWx.match(replaceReg)[0];
 
 const generateStr = pages.reduce((sum, cur) => {
   let _str = replaceStr;

@@ -193,7 +193,7 @@ const buildTypes = [
       classAttrName: "class",
       selector: ".",
       routerConfigPath: "router/index.js",
-      routerBuildFn: ``,
+      routerTemplate: ``,
       pagePath: "pages",
       globalComponentPath: "components",
       files: [],
