@@ -82,7 +82,6 @@ function gotoPage(menu) {
 }
 
 function minimizeWin() {
-  console.log(remote);
   ipc.send('min');
 }
 

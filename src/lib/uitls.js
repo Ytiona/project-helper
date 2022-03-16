@@ -2,7 +2,7 @@
  * @Author: LiYu
  * @Date: 2022-02-27 21:55:03
  * @LastEditors: LiYu
- * @LastEditTime: 2022-03-09 22:42:21
+ * @LastEditTime: 2022-03-13 13:11:24
  * @Description: 
  */
 import storage from './local-storage';
@@ -18,6 +18,18 @@ export function getFileName(filePath) {
 }
 
 export function mkdir(path) {
+  return new Promise((resolve, reject) => {
+    fs.exists(path, e => {
+      if(e) return resolve();
+      fs.mkdir(path, {}, err => {
+        if(err) return reject(err);
+        return resolve();
+      })
+    })
+  })
+}
+
+export function mkdirSync(path) {
   if(!fs.existsSync(path)){
     fs.mkdirSync(path);            
   }

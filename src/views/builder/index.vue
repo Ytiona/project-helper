@@ -10,7 +10,6 @@
       </template>
       <template v-slot:file-list="{ fileList, chooseFile, removeFile }">
         <div class="file-list">
-          <!-- todo: 集成psd解析模块 -->
           <PsdCard
             v-for="(item, index) in fileList"
             :key="item"
@@ -27,7 +26,7 @@
   </div>
   <div class="footer">
     <div class="left">
-      <div class="notice">正在压缩HOME:title.png</div>
+      <!-- <div class="notice">正在压缩HOME:title.png</div> -->
       <div class="output-path">
         <span class="path">输出路径：{{ outputPath }}</span>
         <span class="choose-btn" @click="onChooseOutputPath()">选择路径</span>
@@ -42,7 +41,7 @@
     </div>
   </div>
 
-  <Modal v-model:show="configVisbile" title="构建配置" :width="800">
+  <Modal v-model:show="configVisbile" title="构建配置" :width="800" @on-ok="onConfirmBuildConfig()">
     <BuildConfig class="build block" ref="buildConfig"/>
   </Modal>
 
@@ -51,26 +50,30 @@
     footerHide 
     headHide 
     :closable="false" 
-    :width="240"
+    :width="150"
     :maskClosable="false"
   >
     <div class="build-load">
       <div class="ani-rotate load-icon">
         <i class="iconfont icon-load"/>
       </div>
-      <p class="desc">正在构建...</p>
-      <div class="cancel-btn">取消构建</div>
+      <div class="desc">正在构建...</div>
+      <!-- <div class="cancel-btn">取消构建</div> -->
     </div>
   </Modal>
 
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import Message from '@/ly-ui/message';
+import Modal from '@/ly-ui/modal';
 import FileChoose from '@/components/file-choose';
 import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
-import build from '@/core/builder';
+import ProjectBuilder from '@/core/builder';
+import { DEFAULT_OUTPUT } from '@/constants/routine';
+
 const remote = require('@electron/remote');
 
 const openTinyCompress = ref(true);
@@ -78,9 +81,13 @@ const openTinyCompress = ref(true);
 const configVisbile = ref(false);
 
 const buildLoading = ref(false);
-const outputPath = ref('./project-helper/output');
+const outputPath = ref(DEFAULT_OUTPUT);
 const buildConfig = ref(null);
 const psdItems = [];
+let currentBuildConfig;
+onMounted(() => {
+  currentBuildConfig = buildConfig.value.currentOptions;
+})
 
 function setPsdItems(el) {
   if(el) {
@@ -98,17 +105,43 @@ function onChooseOutputPath() {
   })
 }
 
+async function onConfirmBuildConfig() {
+  try {
+    await buildConfig.value.validate();
+    currentBuildConfig = buildConfig.value.currentOptions;
+    configVisbile.value = false;
+    Message.success('已切换构建配置');
+  } catch(errs) {
+    
+  }
+}
+
 function onBuild() {
-  buildLoading.value = true;
-  Promise.allSettled(psdItems.map(item => {
-    return build({
-      psd: item.parsedPsd.psd,
-      output: outputPath.value,
-      config: buildConfig.value.currentOptions
-    })
-  })).finally(() => {
-    buildLoading.value = false;
+  const repeatNames = new Set();
+  const map = {};
+  psdItems.forEach(item => {
+    if(map[item.name]) {
+      repeatNames.add(item.name);
+    }
+    map[item.name] = true;
   })
+  if(repeatNames.size) {
+    Modal.warning({
+      title: '存在重复的页面/组件名称',
+      content: [...repeatNames].join('；')
+    })
+    return;
+  }
+  buildLoading.value = true;
+  new ProjectBuilder({
+    items: psdItems,
+    output: outputPath.value,
+    config: currentBuildConfig
+  })
+    .build()
+    .finally(() => {
+      buildLoading.value = false;
+    })
 }
 
 </script>
@@ -214,6 +247,7 @@ function onBuild() {
   }
 }
 .build-load {
+  padding: 10px 0;
   overflow: hidden;
   text-align: center;
   color: var(--primary-color);
@@ -222,22 +256,7 @@ function onBuild() {
   }
   .desc {
     margin-top: 10px;
-    margin-bottom: 20px;
     font-size: 14px;
-  }
-  .cancel-btn {
-    padding: 10px;
-    font-size: 15px;
-    letter-spacing: 2px;
-    // box-shadow: 0 0 0 4px #414175, 0 0 0 6px #33335a;
-    border-radius: 6px;
-    color: var(--dark-stress-bg);
-    background: var(--primary-color);
-    cursor: pointer;
-    user-select: none;
-    &:hover {
-      color: var(--l-txt);
-    }
   }
 }
 </style>

@@ -93,7 +93,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(["on-confirm", "on-cancel", "on-close", "update:show"]);
+const emit = defineEmits(["on-ok", "on-cancel", "on-close", "update:show"]);
 
 /**
  * 为实现实例化调用modal能有动画效果
@@ -116,7 +116,7 @@ onMounted(() => {
 })
 
 function onConfirm() {
-  emit("on-confirm");
+  emit("on-ok");
   if(props.instance) {
     props.onOk && props.onOk();
     handleRemove();

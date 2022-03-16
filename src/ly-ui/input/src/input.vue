@@ -2,7 +2,7 @@
  * @Author: LiYu
  * @Date: 2021-09-12 22:27:11
  * @LastEditors: LiYu
- * @LastEditTime: 2022-03-06 22:28:17
+ * @LastEditTime: 2022-03-13 21:56:56
  * @Description: 
 -->
 <template>
@@ -13,7 +13,7 @@
       { 'has-suffix': suffixTxt }
     ]"
   >
-    <input type="text" v-bind="$attrs" class="input" />
+    <input type="text" v-bind="$attrs" class="input" :value="value" @input="onInput"/>
     <Button v-if="suffixTxt" class="suffix">{{ props.suffixTxt }}</Button>
   </div>
 </template>
@@ -28,8 +28,15 @@ const props = defineProps({
   type: {
     type: String,
     dedfault: ''
-  }
+  },
+  value: [String, Number]
 });
+
+const emit = defineEmits(['update:value']);
+
+function onInput(e) {
+  emit('update:value', e.target.value);
+}
 </script>
 
 <style lang="less" scoped>

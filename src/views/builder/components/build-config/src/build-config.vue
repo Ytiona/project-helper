@@ -74,7 +74,7 @@
           <span class="content">
             <input
               type="text"
-              v-model="currentOptions.routerConfigPath"
+              v-model="currentOptions.routerPath"
               class="large"
             />
           </span>
@@ -100,7 +100,17 @@
           <span class="content">
             <input
               type="text"
-              v-model="currentOptions.globalComponentPath"
+              v-model="currentOptions.componentPath"
+              class="large"
+            />
+          </span>
+        </div>
+        <div class="item">
+          <span class="label">图片路径：</span>
+          <span class="content">
+            <input
+              type="text"
+              v-model="currentOptions.imgPath"
               class="large"
             />
           </span>
@@ -118,9 +128,7 @@
       </div>
       <div class="footer">
         <div>
-          <Button @click="deleteOptions()" v-if="currentBuildType.deletable"
-            >删除配置</Button
-          >
+          <Button @click="deleteOptions()" v-if="currentBuildType.deletable">删除配置</Button>
         </div>
         <div class="flex">
           <Button @click="resetOptions()">重置配置</Button>
@@ -164,44 +172,32 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Message, Modal } from '@/ly-ui';
-import buildOptionsPreset from "@/constants/build-options-preset";
+import buildOptionsPreset, { customConfigDefault } from "@/constants/build-options-preset";
 import RouterTemplate from "./router-template.vue";
 import PageFileTemplate from "./page-file-template.vue";
+import Validator from "@/lib/validator";
 
 const localBuildOptionsPreset =
   utils.localStorage.get("buildOptionsPreset") || {};
 
-const buildTypes = [
-  ...Object.values({
-    // 利用对象属性名唯一特性去重
-    ...buildOptionsPreset,
-    ...localBuildOptionsPreset,
-  }).map((item) => ({
-    ...item,
-    // 如果是系统预设，则不可以被删除
-    deletable: !buildOptionsPreset[item.type],
-  })),
-  {
-    title: "自定义",
-    deletable: false,
-    options: {
-      unit: "px",
-      scale: 1.0,
-      width: 750,
-      containerTag: "div",
-      imgTag: "img",
-      classAttrName: "class",
-      selector: ".",
-      routerConfigPath: "router/index.js",
-      routerTemplate: ``,
-      pagePath: "pages",
-      globalComponentPath: "components",
-      files: [],
-    },
-  },
-];
-// todo 表单验证
-const buildOptionsRules = {
+const buildTypes = ref([]);
+handleTypes();
+function handleTypes () {
+  buildTypes.value = [
+    ...Object.values({
+      // 利用对象属性名唯一特性去重
+      ...buildOptionsPreset,
+      ...localBuildOptionsPreset,
+    }).map((item) => ({
+      ...item,
+      // 如果是系统预设，则不可以被删除
+      deletable: !buildOptionsPreset[item.type],
+    })),
+    customConfigDefault
+  ]
+}
+
+const validator = new Validator({
   unit: { required: true, message: "请输入单位" },
   scale: { required: true, message: "请输入缩放比例" },
   width: { required: true, message: "请输入宽度" },
@@ -209,47 +205,91 @@ const buildOptionsRules = {
   imgTag: { required: true, message: "请输入图片标签" },
   classAttrName: { required: true, message: "请输入类属性名" },
   selector: { required: true, message: "请输入选择器" },
-  routerConfigPath: { required: true, message: "请输入路由配置路径" },
+  imgPath: { required: true, message: "请输入选择器" },
+  routerPath: { required: true, message: "请输入路由配置路径" },
   routerTemplate: { required: true, message: "请编写路由配置方法" },
   pagePath: { required: true, message: "请输入页面路径" },
-  globalComponentPath: { required: true, message: "请输入全局组件路径" },
+  componentPath: { required: true, message: "请输入全局组件路径" },
   files: {
-    validator(value, success, fail) {
+    validator(value) {
       if (value.length === 0) {
-        return fail("请至少添加一个页面文件");
+        throw "请至少添加一个页面文件";
       }
-      return success();
+      return true;
     },
   },
-};
+});
 
 const customBuildTitle = ref("");
 const currentBuildType = ref();
 const currentOptions = ref({});
 // 初始切换至第一个预设
-toggleBuildPreset(buildTypes[0]);
+toggleBuildPreset(buildTypes.value[0]);
 function toggleBuildPreset(preset) {
   currentBuildType.value = preset;
   currentOptions.value = _.cloneDeep(currentBuildType.value.options);
 }
-// 构建预设相关
+// 重置当前配置的修改
 function resetOptions() {
   currentOptions.value = _.cloneDeep(currentBuildType.value.options);
   Message.info("配置已重置");
 }
-function saveOptions() {
-  const { type } = currentBuildType.value;
-  if (type) {
-    localBuildOptionsPreset[type] = {
-      ...currentBuildType.value,
-      options: currentOptions.value,
-    };
+
+// 保存配置
+async function saveOptions() {
+  validate().then(() => {
+    const { type } = currentBuildType.value;
+    if (type) {
+      localBuildOptionsPreset[type] = {
+        ...currentBuildType.value,
+        options: currentOptions.value,
+      };
+      Message.success("保存配置成功");
+    } else {
+      if(buildTypes.value.find(item => item.title === customBuildTitle.value)) {
+        return Message.warning(`配置：${customBuildTitle.value} 已存在！`);
+      }
+      // 创建唯一key（type）
+      const customType = `custom-${Date.now()}`;
+      localBuildOptionsPreset[customType] = {
+        type: customType,
+        title: customBuildTitle.value,
+        options: currentOptions.value,
+      };
+      Message.success("新增自定义配置成功");
+
+      // 重置自定义配置
+      customBuildTitle.value = '';
+      currentOptions.value = _.cloneDeep(currentBuildType.value.options);
+
+      // 将新增的配置选中
+      toggleBuildPreset(localBuildOptionsPreset[customType]);
+    }
     utils.localStorage.set("buildOptionsPreset", localBuildOptionsPreset);
-    Message.success("保存配置成功");
-  } else {
-  }
+    handleTypes();
+  }).catch(errs => {
+    
+  })
 }
-function deleteOptions() {}
+
+// 删除配置
+function deleteOptions() {
+  const { title, type } = currentBuildType.value;
+  Modal.confirm({
+    title: '温馨提示',
+    content: `确定删除配置：${title} ?`,
+    onOk: () => {
+      // 删除当前选中的配置
+      localBuildOptionsPreset[type] = null;
+      delete localBuildOptionsPreset[type];
+      // 更新到本地存储
+      utils.localStorage.set("buildOptionsPreset", localBuildOptionsPreset);
+      handleTypes(); // 刷新界面
+      toggleBuildPreset(buildTypes.value[0]);
+      Message.success("删除配置成功");
+    }
+  })
+}
 
 // 路由模板相关
 const editRouterTemplateVisble = ref(false);
@@ -263,7 +303,6 @@ function onConfrimRouterTemplte() {
     editRouterTemplateVisble.value = false;
   });
 }
-
 
 // 添加页面文件
 const addPageFileTemplateVisble = ref(false);
@@ -321,9 +360,18 @@ function onDeleteFile(index, item) {
   })
 }
 
+function validate() {
+  return validator.validate(currentOptions.value)
+    .catch(errs => {
+      Message.error(Object.values(errs)[0].message || '校验不通过');
+      return Promise.reject(errs);
+    })
+}
+
 defineExpose({
   currentBuildType,
-  currentOptions
+  currentOptions,
+  validate
 })
 
 </script>

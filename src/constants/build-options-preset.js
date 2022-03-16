@@ -10,7 +10,8 @@ export default {
       imgTag: 'image',
       classAttrName: 'class',
       selector: '.',
-      routerConfigPath: 'router/index.js',
+      imgPath: 'assets',
+      routerPath: 'app.json',
       routerTemplate: `{
   "pages": [
     #start
@@ -19,7 +20,7 @@ export default {
   ]
 }`,
       pagePath: 'pages',
-      globalComponentPath: 'components',
+      componentPath: 'components',
       files: [
         {
           fileName: '#name.wxml',
@@ -27,13 +28,11 @@ export default {
         },
         {
           fileName: '#name.js',
-          template: `
-            Page({
-              data: {},
-              onLoad() {},
-              onReady() {},
-            })
-          `
+          template: `Page({
+  data: {},
+  onLoad() {},
+  onReady() {},
+})`
         },
         {
           fileName: '#name.wxss',
@@ -57,7 +56,8 @@ export default {
       imgTag: 'img',
       classAttrName: 'class',
       selector: '.',
-      routerConfigPath: 'router/index.js',
+      imgPath: 'assets',
+      routerPath: 'router/index.js',
       routerTemplate: `[
   #start
   {
@@ -71,18 +71,19 @@ export default {
   #end
 ]`,
       pagePath: 'views',
-      globalComponentPath: 'components',
+      componentPath: 'components',
       files: [
         {
           fileName: 'index.vue',
-          template: `
-            <template>
-              #html
-            </template>
-            
-            <script setup>
-            </script>
-          `
+          template: `<template>
+  #html
+</template>
+
+<script setup>
+</script>
+<style scoped>
+@import './index.css'
+</style>`
         },
         {
           fileName: 'index.css',
@@ -102,7 +103,8 @@ export default {
       imgTag: 'img',
       classAttrName: 'className',
       selector: '.',
-      routerConfigPath: 'router/index.js',
+      imgPath: 'assets',
+      routerPath: 'router/index.js',
       routerTemplate: `[
   #start
   {
@@ -112,32 +114,49 @@ export default {
   #end
 ]`,
       pagePath: 'pages',
-      globalComponentPath: 'components',
+      componentPath: 'components',
       files: [
         {
           fileName: 'index.js',
           template: `
-            import React, { memo } from 'react';
-            import StyleWrap from './style.js';
-            export default memo(function #name(){
-              return (
-                <>
-                  #html
-                </>
-              )
-            })
-          `
+import React, { memo } from 'react';
+import StyleWrap from './style.js';
+export default memo(function #name(){
+  return (
+    <>
+      #html
+    </>
+  )
+})`
         },
         {
           fileName: 'style.js',
-          template: `
-            import styled from 'styled-components';
-            export default styled.div\`
-              #css
-            \`
-          `
+          template: `import styled from 'styled-components';
+export default styled.div\`
+  #css
+\``
         }
       ]
     }
   }
+}
+
+export const customConfigDefault = {
+  title: "自定义",
+  deletable: false,
+  options: {
+    unit: "px",
+    scale: 1.0,
+    width: 750,
+    containerTag: "div",
+    imgTag: "img",
+    classAttrName: "class",
+    selector: ".",
+    imgPath: 'assets',
+    routerPath: "router/index.js",
+    routerTemplate: ``,
+    pagePath: "pages",
+    componentPath: "components",
+    files: [],
+  },
 }

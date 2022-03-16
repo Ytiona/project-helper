@@ -8,15 +8,21 @@
     </div>
     <i class="iconfont icon-close" @click="remove()" />
     <div class="right">
+      <!-- <div class="name-inp">
+        <span class="label">名称：</span>
+        <span class="input-wrap">
+          <input type="text" v-model="name" placeholder="页面/组件名称"/>
+        </span>
+      </div> -->
       <div class="title">
         <span class="file-name">{{ fileName }}：</span>
-        <Input type="compact" v-model:value="pageName" placeholder="页面名称" />
+        <Input type="compact" v-model:value="name" placeholder="页面/组件名称" />
       </div>
       <div class="file-info">
         <span v-if="!parseLoading">
-          W:{{ parsedPsd.width }} H:{{ parsedPsd.height }}/{{
+          W:{{ parsedPsd.width }} H:{{ parsedPsd.height }} | {{
             (parsedPsd.fileSize / 1024 / 1024).toFixed(2)
-          }}Mb/{{ parsedPsd.layerCount }}个图层
+          }}Mb | {{ parsedPsd.layerCount }}个图层
         </span>
         <span class="loading" v-else>正在解析...</span>
       </div>
@@ -31,7 +37,6 @@
             {{ typeItem.name }}
           </div>
         </div>
-        <Checkbox v-model:value="isPopup" class="is-pop">弹窗</Checkbox>
       </div>
     </div>
   </div>
@@ -54,8 +59,7 @@ const props = defineProps({
 const parseLoading = ref(true);
 const parsedPsd = ref({});
 const fileName = ref('');
-const pageName = ref('');
-const isPopup = ref(false);
+const name = ref('');
 const type = ref('page');
 
 const targetTypes = [
@@ -69,6 +73,7 @@ watch(() => props.filePath, handleParse);
 function handleParse() {
   parseLoading.value = true;
   fileName.value = getFileName(props.filePath);
+  name.value = fileName.value;
   parsePsd(props.filePath).then(res => {
     parsedPsd.value = res;
   }).finally(() => {
@@ -77,6 +82,9 @@ function handleParse() {
 }
 
 defineExpose({
+  type,
+  name,
+  fileName,
   parsedPsd
 })
 
@@ -88,13 +96,15 @@ defineExpose({
   display: flex;
   align-items: center;
   height: 90px;
-  padding: 10px;
+  padding: 4px 8px;
+  padding-right: 18px;
   box-sizing: border-box;
   border: 1px solid var(--stress-bg);
   border-radius: 10px;
   .file-icon {
     width: 50px;
     height: 50px;
+    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,21 +122,42 @@ defineExpose({
     margin-left: 10px;
     overflow: hidden;
   }
+  .name-inp {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--l-txt);
+    .input-wrap {
+      flex: 1;
+      font-size: 13px;
+      border-bottom: 1px solid var(--stress-bg);
+      padding-bottom: 4px;
+      input {
+        width: 100%;
+        border: none;
+        outline: none;
+        color: var(--primary-color);
+        background: none;
+      }
+    }
+  }
   .title {
     display: flex;
     align-items: center;
-
+    margin-bottom: 10px;
     .file-name {
-      font-size: 14px;
+      font-size: 12px;
       color: var(--l-txt);
     }
     .ly-input {
       flex: 1;
       max-width: 100px;
+      font-size: 12px;
     }
   }
   .file-info {
-    margin: 10px 0;
+    margin-bottom: 10px;
     font-size: 11px;
     color: var(--primary-color);
   }
@@ -135,7 +166,7 @@ defineExpose({
     .file-types {
       display: flex;
       font-size: 11px;
-      color: var(--l-txt);
+      color: var(--primary-color);
       border-radius: 4px;
       overflow: hidden;
       background: var(--stress-bg);
@@ -143,6 +174,7 @@ defineExpose({
         padding: 3px 6px;
         cursor: pointer;
         &.active {
+          color: var(--stress-bg);
           background: var(--primary-color);
         }
       }

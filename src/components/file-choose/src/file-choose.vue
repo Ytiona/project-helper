@@ -40,7 +40,11 @@ const fileChoose = new FileChoose({
 const fileList = ref([]);
 
 async function chooseFile() {
-  fileList.value = await fileChoose.chooseFiles();
+  try {
+    fileList.value = await fileChoose.chooseFiles();
+  } catch(err) {
+    // console.log(err);  
+  }
 }
 
 function removeFile(index) {

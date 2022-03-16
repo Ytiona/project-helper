@@ -2,14 +2,13 @@
 * @Author: LiYu
 * @Date: 2022-03-05 22:08:07
  * @LastEditors: LiYu
- * @LastEditTime: 2022-03-07 20:44:23
+ * @LastEditTime: 2022-03-16 22:15:49
 * @Description: 表单校验类
 */
 
 /**
  * @description: 
  * @param {Object} rules 必填 校验规则
- * @param {Object} form 必填 校验对象
  * @return {*}
  */
 export default class Validator {
@@ -36,17 +35,12 @@ export default class Validator {
   static types = ['string', 'number', 'boolean', 'function', 'float', 'integer', 'array', 'object', 'date', 'regexp'];
 
   rules = {};
-  form = {};
 
-  constructor(rules, form) {
+  constructor(rules) {
     if (!Validator.isObject(rules)) {
       throw new Error('Rules must be an object');
     }
-    if (!Validator.isObject(form)) {
-      throw new Error('Form must be an object');
-    }
     this.rules = rules;
-    this.form = form;
     Object.keys(rules).forEach(name => {
       const item = rules[name];
       this.rules[name] = Array.isArray(item) ? item : [item];
@@ -58,8 +52,8 @@ export default class Validator {
    * @description: 校验所有rules中字段
    * @return {Promise}
    */
-  validate() {
-    const { rules, form } = this;
+  validate(form) {
+    const { rules } = this;
     const tasks = Object.keys(rules).map(field => {
       return new Promise(async (resolve, reject) => {
         const currentRules = rules[field];
