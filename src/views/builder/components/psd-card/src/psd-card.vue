@@ -45,7 +45,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import parsePsd from '@/core/analysis';
-import { getFileName } from '@/lib/uitls';
+import { getFileName } from '@/lib/utils';
 const props = defineProps({
   filePath: {
     type: String,

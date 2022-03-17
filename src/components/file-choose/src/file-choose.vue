@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import FileChoose from '@/core/file-choose';
 
 const props = defineProps({
@@ -33,11 +33,17 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['on-files-change']);
+
 const fileChoose = new FileChoose({
   filters: props.filters
 })
 
 const fileList = ref([]);
+
+watch(fileList, () => {
+  emit('on-files-change', fileList.value);
+})
 
 async function chooseFile() {
   try {

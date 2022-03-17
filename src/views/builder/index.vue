@@ -4,6 +4,7 @@
       class="file-choose"
       :filters="[{ name: 'PSD文件', extensions: 'psd' }]" 
       empty-tips="拖入文件夹/PSD文件"
+      @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
         <Button icon="setting-fill" @click="configVisbile = true">构建配置</Button>
@@ -73,7 +74,9 @@ import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
 import ProjectBuilder from '@/core/builder';
 import { DEFAULT_OUTPUT } from '@/constants/routine';
-
+import { walkSync } from '@/lib/utils';
+import tinyCompress from '@/core/tiny-compress';
+const path = require('path');
 const remote = require('@electron/remote');
 
 const openTinyCompress = ref(true);
@@ -95,6 +98,10 @@ function setPsdItems(el) {
   }
 }
 
+function resetPsdItems() {
+  psdItems.length = 0; // 清空数组，保证引用不变
+}
+
 function onChooseOutputPath() {
   remote.dialog.showOpenDialog({
     properties: ['openDirectory']
@@ -111,12 +118,11 @@ async function onConfirmBuildConfig() {
     currentBuildConfig = buildConfig.value.currentOptions;
     configVisbile.value = false;
     Message.success('已切换构建配置');
-  } catch(errs) {
-    
-  }
+  } catch(errs) {}
 }
 
 function onBuild() {
+  if(!psdItems.length) return Message.error('请添加PSD文件');
   const repeatNames = new Set();
   const map = {};
   psdItems.forEach(item => {
@@ -139,9 +145,22 @@ function onBuild() {
     config: currentBuildConfig
   })
     .build()
+    .then(res => {
+      compressPng();
+    })
     .finally(() => {
       buildLoading.value = false;
     })
+}
+
+function compressPng() {
+  const imgs = [];
+  walkSync(`${outputPath.value}/${currentBuildConfig.imgPath}`, filePath => {
+    if(path.extname(filePath) === '.png') {
+      imgs.push(filePath);
+      tinyCompress(filePath);
+    }
+  })
 }
 
 </script>
