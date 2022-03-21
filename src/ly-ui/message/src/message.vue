@@ -67,12 +67,15 @@ function onClose() {
 <style lang="less">
 .message {
   position: fixed;
-  top: 36px;
+  top: 50px;
   z-index: 2000;
   left: 50%;
   transform: translateX(-50%);
   transition: top .4s ease;
 }
+</style>
+
+<style lang="less" scoped>
 .message-wrap {
   line-height: 1;
   display: flex;

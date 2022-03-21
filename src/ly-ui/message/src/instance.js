@@ -1,7 +1,14 @@
+/*
+ * @Author: LiYu
+ * @Date: 2022-02-28 22:21:25
+ * @LastEditors: LiYu
+ * @LastEditTime: 2022-03-20 22:24:17
+ * @Description: 
+ */
 import { createApp } from 'vue';
 import Message from './message.vue';
 
-const OFFSET_Y = 36;
+const OFFSET_Y = 50;
 
 function createInstance(config = {}) {
   // 1.创建节点，设置class、top值

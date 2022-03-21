@@ -158,11 +158,12 @@ function compressPng() {
   walkSync(`${outputPath.value}/${currentBuildConfig.imgPath}`, filePath => {
     if(path.extname(filePath) === '.png') {
       imgs.push(filePath);
-      tinyCompress(filePath);
+      tinyCompress(filePath).then(res => {
+        console.log(res);
+      })
     }
   })
 }
-
 </script>
 
 <style lang="less" scoped>
