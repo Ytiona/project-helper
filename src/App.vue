@@ -2,11 +2,10 @@
  * @Author: LiYu
  * @Date: 2021-09-12 17:52:52
  * @LastEditors: LiYu
- * @LastEditTime: 2022-03-21 23:03:56
+ * @LastEditTime: 2022-03-22 22:37:54
  * @Description: 
 -->
 <template>
-  
   <div class="container">
     <div class="slide">
       <div class="logo">
