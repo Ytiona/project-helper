@@ -2,16 +2,16 @@
   <div class="container">
     <div class="top">
       <div class="left">
-        <Button @click="chooseFile()" icon="add">添加文件</Button>
-        <Button @click="clearAll()" icon="clear-empty" icon-in="right">清空列表</Button>
+        <Button @click="chooseFiles()" icon="add">添加文件</Button>
+        <Button @click="clear()" icon="clear-empty" icon-in="right">清空列表</Button>
       </div>
       <slot name="top-right"></slot>
     </div>  
     <div class="block-wrap">
       <template v-if="fileList.length">
-        <slot name="file-list" :fileList="fileList" :chooseFile="chooseFile" :removeFile="removeFile"></slot>
+        <slot name="file-list" :fileList="fileList" :chooseFiles="chooseFiles" :removeFile="index => removeFile({ index })"></slot>
       </template>
-      <div class="empty" v-else @click="chooseFile()">
+      <div class="empty" v-else @click="chooseFiles()">
         <i class="iconfont icon-upload"/>
         <div class="tips">{{ emptyTips }}</div>
       </div>
@@ -20,8 +20,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import FileChoose from '@/core/file-choose';
+import { watch } from 'vue';
+import useFileChoose from '@/core/file-choose';
 
 const props = defineProps({
   filters: {
@@ -35,31 +35,21 @@ const props = defineProps({
 
 const emit = defineEmits(['on-files-change']);
 
-const fileChoose = new FileChoose({
+const {
+  fileList,
+  chooseFiles,
+  removeFile,
+  clear,
+} = useFileChoose({
   filters: props.filters
 })
 
-const fileList = ref([]);
 
 watch(fileList, () => {
   emit('on-files-change', fileList.value);
 })
 
-async function chooseFile() {
-  try {
-    fileList.value = await fileChoose.chooseFiles();
-  } catch(err) {
-    // console.log(err);  
-  }
-}
 
-function removeFile(index) {
-  fileList.value = fileChoose.removeFile({ index });
-}
-
-function clearAll() {
-  fileList.value = fileChoose.clear();
-}
 
 </script>
 

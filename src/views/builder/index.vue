@@ -7,9 +7,9 @@
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">构建配置</Button>
+        <Button icon="setting-fill" @click="configVisbile = true">构建配置：{{currentBuildType.title}}</Button>
       </template>
-      <template v-slot:file-list="{ fileList, chooseFile, removeFile }">
+      <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
           <PsdCard
             v-for="(item, index) in fileList"
@@ -17,8 +17,9 @@
             :filePath="item" 
             :remove="() => removeFile(index)"
             :ref="setPsdItems"
+            class="file-item"
           ></PsdCard>
-          <div class="add-btn" @click="chooseFile()">
+          <div class="add-btn" @click="chooseFiles()">
             <i class="iconfont icon-add"></i>
           </div>
         </div>
@@ -27,7 +28,6 @@
   </div>
   <div class="footer">
     <div class="left">
-      <!-- <div class="notice">正在压缩HOME:title.png</div> -->
       <div class="output-path">
         <span class="path">输出路径：{{ outputPath }}</span>
         <span class="choose-btn" @click="onChooseOutputPath()">选择路径</span>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import Message from '@/ly-ui/message';
 import Modal from '@/ly-ui/modal';
 import FileChoose from '@/components/file-choose';
@@ -76,10 +76,12 @@ import ProjectBuilder from '@/core/builder';
 import { DEFAULT_OUTPUT } from '@/constants/routine';
 import { walkSync } from '@/lib/utils';
 import tinyCompress from '@/core/tiny-compress';
+import { useLocalStorage } from '@/lib/hooks';
+
 const path = require('path');
 const remote = require('@electron/remote');
 
-const openTinyCompress = ref(true);
+const openTinyCompress = useLocalStorage('openTinyCompress', true);
 
 const configVisbile = ref(false);
 
@@ -88,7 +90,9 @@ const outputPath = ref(DEFAULT_OUTPUT);
 const buildConfig = ref(null);
 const psdItems = [];
 let currentBuildConfig;
+let currentBuildType = ref({});
 onMounted(() => {
+  currentBuildType.value = buildConfig.value.currentBuildType;
   currentBuildConfig = buildConfig.value.currentOptions;
 })
 
@@ -116,6 +120,7 @@ async function onConfirmBuildConfig() {
   try {
     await buildConfig.value.validate();
     currentBuildConfig = buildConfig.value.currentOptions;
+    currentBuildType.value = buildConfig.value.currentBuildType;
     configVisbile.value = false;
     Message.success('已切换构建配置');
   } catch(errs) {}
@@ -178,7 +183,7 @@ function compressPng() {
 .file-list {
   display: grid;
   gap: 20px;
-  grid-template-columns: repeat(auto-fill, 280px);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   .add-btn {
     display: flex;
     align-items: center;
@@ -210,18 +215,15 @@ function compressPng() {
   align-items: center;
   justify-content: space-between;
   background: var(--dark-stress-bg);
-  .notice {
-    margin-bottom: 10px;
-    font-size: 12px;
-    color: var(--primary-color);
-  }
   .output-path {
     display: flex;
     align-items: center;
     .path {
+      display: flex;
       padding: 4px 10px;
       font-size: 12px;
       border-radius: 6px;
+      word-break: break-all;
       color: var(--primary-color);
       background: var(--stress-bg);
     }
@@ -230,6 +232,7 @@ function compressPng() {
       padding: 4px 10px;
       font-size: 12px;
       border-radius: 6px;
+      white-space: nowrap;
       color: var(--primary-color);
       background: var(--stress-bg);
       cursor: pointer;
@@ -250,6 +253,7 @@ function compressPng() {
     padding: 8px 26px;
     font-size: 18px;
     letter-spacing: 2px;
+    white-space: nowrap;
     color: var(--l-txt);
     border: 2px solid var(--primary-color);
     border-radius: 12px;

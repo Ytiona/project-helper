@@ -41,6 +41,7 @@ function toggleValue() {
   }
   .suffix {
     margin-left: 4px; 
+    white-space: nowrap;
   }
   .prefix,.suffix {
     font-size: 12px;
