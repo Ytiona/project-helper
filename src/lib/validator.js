@@ -1,18 +1,12 @@
-/*
-* @Author: LiYu
-* @Date: 2022-03-05 22:08:07
- * @LastEditors: LiYu
- * @LastEditTime: 2022-03-16 22:15:49
-* @Description: 表单校验类
-*/
-
 /**
- * @description: 
- * @param {Object} rules 必填 校验规则
- * @return {*}
- */
-export default class Validator {
-  static pattern = {
+  * @Author: LiYu
+  * @Date: 2022-03-05 22:08:07
+  * @LastEditors: LiYu
+  * @LastEditTime: 2022-03-16 22:15:49
+  * @Description: 表单校验类，validateField可控是否字段包裹
+  */
+ class Validator {
+  static pattern = Object.freeze({
     // Email地址
     email: /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/,
     // 手机号码
@@ -29,92 +23,256 @@ export default class Validator {
     ip: /((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}/,
     // 中国邮政编码
     postalCode: /[1-9]\d{5}(?!\d)/
-  };
+  });
 
-  // type取值
-  static types = ['string', 'number', 'boolean', 'function', 'float', 'integer', 'array', 'object', 'date', 'regexp'];
+  // rules中的type取值
+  static types = Object.freeze(['string', 'number', 'boolean', 'function', 'float', 'integer', 'array', 'object', 'date', 'regexp']);
 
-  rules = {};
+  _rules = {};
 
-  constructor(rules) {
-    if (!Validator.isObject(rules)) {
-      throw new Error('Rules must be an object');
+  /**
+   * @param {Object} rules 必填 校验规则
+   * @param {Object} transform 选填 字段值的转换配置
+   * @return {validator}
+   */
+  constructor(config) {
+    if (!Validator.isObject(config)) {
+      throw new Error('config must be an object');
     }
-    this.rules = rules;
-    Object.keys(rules).forEach(name => {
-      const item = rules[name];
-      this.rules[name] = Array.isArray(item) ? item : [item];
+
+    const { rules, transform, messageHook } = config;
+
+    if (!Validator.isObject(rules)) {
+      throw new Error('rules must be an object');
+    }
+    if (transform && !Validator.isObject(transform)) {
+      throw new Error('transform must be an object');
+    }
+    if (messageHook && !Validator.isFunction(messageHook)) {
+      throw new Error('messageHook must be an function');
+    }
+
+    this._transform = transform;
+    this._messageHook = messageHook;
+
+    Object.keys(rules).forEach(field => {
+      const item = rules[field];
+      // 格式统一
+      this._rules[field] = Validator.isArray(item) ? item : [item];
     });
   }
 
-
   /**
    * @description: 校验所有rules中字段
+   * @param {Object} form 被校验的表单
    * @return {Promise}
    */
   validate(form) {
-    const { rules } = this;
-    const tasks = Object.keys(rules).map(field => {
-      return new Promise(async (resolve, reject) => {
-        const currentRules = rules[field];
-        for (let i = 0, len = currentRules.length; i < len; i++) {
-          const rule = currentRules[i];
-          const { required, type, pattern } = rule;
-          const { oneOf, isEmpty, capitalize, isRegexp, isFunction } = Validator;
-          // 验证器集合
-          const validators = [
-            required ? value => !isEmpty(value) : null,
-            oneOf(type, Validator.types) ? value => {
-              return Validator[`is${capitalize(type)}`](value);
-            } : null,
-            isRegexp(pattern) ? value => pattern.test(value) : null,
-            isFunction(rule.validator) ? rule.validator : null
-          ].filter(item => item);
+    if (!Validator.isObject(form)) {
+      throw new Error('Form parameter is not an object');
+    }
 
-          for (const validator of validators) {
-            try {
-              const result = await validator(form[field]);
-              if (!result) {
-                return reject({ field, rule });
-              }
-            } catch (errMsg) {
-              return reject({
-                field,
-                rule: {
-                  ...rule,
-                  message: errMsg || rule.message
-                },
-              });
-            }
-          }
-        }
-        return resolve();
-      })
-    })
+    const { _rules } = this;
+
+    const tasks = Object.keys(_rules).map(field => this.validateField(field, form, true));
+
     return new Promise(async (resolve, reject) => {
       const validateResult = await Promise.allSettled(tasks);
+      // 过滤出验证失败的项
       const errors = validateResult.filter(item => item.status === 'rejected');
-      if (errors.length) {
+      if (errors.length > 0) {
         const errorsMap = {};
         errors.forEach(err => {
+          // 字段名映射
           errorsMap[err.reason.field] = err.reason.rule;
         })
-        reject(errorsMap);
-      } else {
-        resolve();
+        return reject(errorsMap);
       }
+      return resolve();
     })
   }
 
   /**
    * @description: 校验指定字段
-   * @param {String} filed 要校验的字段
+   * @param {String} field 要校验的字段
+   * @param {Object} form 被校验的表单
+   * @param {Boolean} fieldWrap 是否包含字段
    * @return {Promise}
    */
-  validateFields(filed) {
+  validateField(field, form, fieldWrap = false) {
+    if (!Validator.isObject(form)) {
+      throw new Error('Form parameter is not an object');
+    }
 
+    const { _rules, _transform = {} } = this;
+
+    // 如果规则中不存在，则认定为校验通过
+    if (!_rules[field]) return Promise.resolve();
+
+    return new Promise(async (resolve, reject) => {
+      const currentRules = _rules[field];
+      const currentTransform = _transform[field] || (value => value);
+
+      for (const rule of currentRules) {
+
+        // 创建职责链
+        const chain = [
+          this._validateRequired,
+          this._validateType,
+          this._validatePattern,
+          this._validateMaxlen,
+          this._validateMinlen,
+          this._validateEnum,
+          this._customValidate
+        ]
+
+        // 执行职责链
+        for (const validator of chain) {
+          const validateRes = await validator(rule, currentTransform(form[field]), field);
+          let errMsg;
+          let pass = validateRes;
+          // 返回类型兼容自定义message
+          if (typeof (validateRes) === 'object') {
+            pass = validateRes.pass;
+            errMsg = validateRes.message;
+          }
+          // 校验不通过
+          if (!pass) {
+            const message = errMsg || rule.message;
+            // message配置为函数，执行
+            if (Validator.isFunction(message)) {
+              message();
+            } else if (this._messageHook) {
+              // 存在全局的messageHook
+              this._messageHook(message);
+            }
+            const finalRule = { ...rule, message };
+            if (fieldWrap) {
+              // 中断职责链，返回包含字段名的校验结果
+              return reject({ field, rule: finalRule });
+            }
+            // 中断职责链
+            return reject(finalRule);
+          }
+        }
+      }
+      return resolve();
+    })
   }
 
+  // 必填校验
+  _validateRequired(rule, value) {
+    if (rule.required) {
+      if (Validator.isEmpty(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // 类型校验
+  _validateType(rule, value, field) {
+    const { type } = rule;
+    if (type) {
+      const { oneOf, capitalize } = Validator;
+      // 有效的type，添加对应的类型校验
+      if (oneOf(type, Validator.types)) {
+        // 使用Validator类上静态方法，类型校验
+        if (!Validator[`is${capitalize(type)}`](value)) {
+          return false;
+        }
+      } else {
+        console.warn(`There is a type in field ${field} that is unsupported`);
+      }
+    }
+    return true;
+  }
+
+  // 正则校验
+  _validatePattern(rule, value, field) {
+    const { pattern } = rule;
+    if (pattern) {
+      // 有效的正则，添加正则校验
+      if (Validator.isRegexp(pattern)) {
+        if (!pattern.test(value)) {
+          return false;
+        }
+      } else {
+        console.warn(`There is a pattern in field ${field} that is not of type regexp`);
+      }
+    }
+    return true;
+  }
+
+  // 自定义校验
+  async _customValidate(rule, value, field) {
+    const { validator } = rule;
+    if (validator) {
+      // 自定义校验
+      if (Validator.isFunction(validator)) {
+        try {
+          const validRes = validator(value);
+          if (validRes instanceof Promise) {
+            // 如果validRes是promise.reject则会被下面catch捕获
+            await validRes;
+          } else if (!validRes) {
+            // 自定义非异步validator校验不通过
+            return false;
+          }
+        } catch (err) {
+          // 捕获自定义validator中的异常和Promise.reject
+          let errMsg = err;
+          // 取error对象中的message或reject对象中的message
+          if (typeof (err) === 'object') {
+            errMsg = err.message;
+          }
+          return {
+            pass: false,
+            message: errMsg
+          }
+        }
+      } else {
+        console.warn(`There is a validator in field ${field} that is not of type function`);
+      }
+    }
+    return true;
+  }
+
+  // 最大长度校验
+  _validateMaxlen(rule, value, field) {
+    const { maxlength } = rule;
+    if (maxlength) {
+      if (Validator.isInteger(maxlength) && maxlength > 0) {
+        return value.length <= maxlength;
+      }
+      console.warn(`There is a maxLength in the field ${field} that is not a positive integer type`)
+    }
+    return true;
+  }
+
+  // 最小长度校验
+  _validateMinlen(rule, value, field) {
+    const { minlength } = rule;
+    if (minlength) {
+      if (Validator.isInteger(minlength) && minlength > 0) {
+        return value.length >= minlength;
+      }
+      console.warn(`There is a minlength in the field ${field} that is not a positive integer type`)
+    }
+    return true;
+  }
+
+  // 枚举校验
+  _validateEnum(rule, value, field) {
+    const { enum: list } = rule;
+    if (list) {
+      if (Validator.isArray(list)) {
+        return Validator.oneOf(value, list);
+      }
+      console.warn(`There is a minlength in the field ${field} that is not a positive array type`)
+    }
+    return true;
+  }
 
   /**
    * @description: 首字符转大写
@@ -129,12 +287,15 @@ export default class Validator {
   }
 
   /**
-   * @description: 
+   * @description: 判断值是否存在于validList中
    * @param {*} value
    * @param {*} validList
-   * @return {*}
+   * @return {Boolean}
    */
   static oneOf(value, validList) {
+    if (!Validator.isArray(validList)) {
+      throw new Error('validList must be of array type');
+    }
     for (let i = 0; i < validList.length; i++) {
       if (value === validList[i]) {
         return true;
@@ -206,7 +367,7 @@ export default class Validator {
    * @return {Boolean}
    */
   static isInteger(value) {
-    return Validator.number(value) && parseInt(value, 10) === value;
+    return Validator.isNumber(value) && parseInt(value, 10) === value;
   }
 
   /**
@@ -215,7 +376,7 @@ export default class Validator {
    * @return {Boolean}
    */
   static isFloat(value) {
-    return Validator.number(value) && !Validator.integer(value);
+    return Validator.isNumber(value) && !Validator.isTnteger(value);
   }
 
   /**
@@ -334,5 +495,6 @@ export default class Validator {
   static isPostalCode(value) {
     return Validator.pattern.postalCode.test(value);
   }
-
 }
+
+export default Validator;

@@ -176,9 +176,10 @@ import buildOptionsPreset, { customConfigDefault } from "@/constants/build-optio
 import RouterTemplate from "./router-template.vue";
 import PageFileTemplate from "./page-file-template.vue";
 import Validator from "@/lib/validator";
+import storage from '@/lib/local-storage';
 
 const localBuildOptionsPreset =
-  utils.localStorage.get("buildOptionsPreset") || {};
+  storage.get("buildOptionsPreset") || {};
 
 const buildTypes = ref([]);
 handleTypes();
@@ -197,7 +198,7 @@ function handleTypes () {
   ]
 }
 
-const validator = new Validator({
+const rules = {
   unit: { required: true, message: "请输入单位" },
   scale: { required: true, message: "请输入缩放比例" },
   width: { required: true, message: "请输入宽度" },
@@ -218,7 +219,9 @@ const validator = new Validator({
       return true;
     },
   },
-});
+}
+
+const validator = new Validator({ rules });
 
 const customBuildTitle = ref("");
 const currentBuildType = ref();
@@ -265,10 +268,8 @@ async function saveOptions() {
       // 将新增的配置选中
       toggleBuildPreset(localBuildOptionsPreset[customType]);
     }
-    utils.localStorage.set("buildOptionsPreset", localBuildOptionsPreset);
+    storage.set("buildOptionsPreset", localBuildOptionsPreset);
     handleTypes();
-  }).catch(errs => {
-    
   })
 }
 
@@ -283,7 +284,7 @@ function deleteOptions() {
       localBuildOptionsPreset[type] = null;
       delete localBuildOptionsPreset[type];
       // 更新到本地存储
-      utils.localStorage.set("buildOptionsPreset", localBuildOptionsPreset);
+      storage.set("buildOptionsPreset", localBuildOptionsPreset);
       handleTypes(); // 刷新界面
       toggleBuildPreset(buildTypes.value[0]);
       Message.success("删除配置成功");
@@ -373,7 +374,6 @@ defineExpose({
   currentOptions,
   validate
 })
-
 </script>
 
 <style lang="less" scoped>
