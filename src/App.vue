@@ -107,6 +107,7 @@ function maximizeWin() {
 function closeWin() {
   ipc.send('close');
 }
+
 </script>
 
 <style lang="less" scoped>

@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import Message from '@/ly-ui/message';
 import Modal from '@/ly-ui/modal';
 import FileChoose from '@/components/file-choose';
@@ -74,11 +74,9 @@ import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
 import ProjectBuilder from '@/core/builder';
 import { DEFAULT_OUTPUT } from '@/constants/routine';
-import { walkSync } from '@/lib/utils';
 import tinyCompress from '@/core/tiny-compress';
 import { useLocalStorage } from '@/lib/hooks';
 
-const path = require('path');
 const remote = require('@electron/remote');
 
 const openTinyCompress = useLocalStorage('openTinyCompress', true);
@@ -143,32 +141,37 @@ function onBuild() {
     })
     return;
   }
-  buildLoading.value = true;
-  new ProjectBuilder({
+  
+  const projectBuilder = new ProjectBuilder({
     items: psdItems,
     output: outputPath.value,
     config: currentBuildConfig
-  })
-    .build()
-    .then(res => {
-      compressPng();
+  });
+
+  const {
+    routerTask,
+    psdTasks
+  } = projectBuilder.build();
+
+  if(openTinyCompress.value) {
+    psdTasks.forEach(({
+      fileTasks,
+      imgTasks
+    }) => {
+      Promise
+        .allSettled(imgTasks.map(item => item.promise))
+        .finally(() => {
+          imgTasks.forEach(({ savePath }) => {
+            tinyCompress(savePath)
+              .then(res => {
+                console.log('ok: ', savePath, res);
+              })
+          })
+        })
     })
-    .finally(() => {
-      buildLoading.value = false;
-    })
+  }
 }
 
-function compressPng() {
-  const imgs = [];
-  walkSync(`${outputPath.value}/${currentBuildConfig.imgPath}`, filePath => {
-    if(path.extname(filePath) === '.png') {
-      imgs.push(filePath);
-      tinyCompress(filePath).then(res => {
-        console.log(res);
-      })
-    }
-  })
-}
 </script>
 
 <style lang="less" scoped>

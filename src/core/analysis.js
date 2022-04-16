@@ -6,7 +6,7 @@
  * @Description: 
  */
 
- function parsePsd(psdFilePath) {
+ function analysisPsd(psdFilePath) {
   return PSD.open(psdFilePath).then(psd => {
     const fileSize = psd.file.data.length;
     const width = psd.header.width;
@@ -24,4 +24,4 @@
   })
 }
 
-export default parsePsd;
+export default analysisPsd;

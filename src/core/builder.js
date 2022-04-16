@@ -26,17 +26,19 @@ class ProjectBuilder {
   }
 
   build() {
-    // 1.创建图片、页面、组件目录
-    this.createDir();
-    return Promise.allSettled([
-      // 2.构建路由目录及文件
-      this.createRouter(),
-      // 3.构建psd
-      this.buildPsds()
-    ])
+    // 创建图片、页面、组件根目录
+    this.makeRootDir();
+    // 构建路由目录及文件
+    const routerTask = this.makeRouter();
+    // 构建psd
+    const psdTasks = this.buildPsds();
+    return {
+      routerTask,
+      psdTasks
+    }
   }
 
-  createDir() {
+  makeRootDir() {
     const {
       imgPath,
       pagePath,
@@ -51,7 +53,7 @@ class ProjectBuilder {
     mkdirSync(this.componentPath);
   }
 
-  createRouter() {
+  makeRouter() {
     return new Promise((resolve, reject) => {
       const { routerPath, routerTemplate, pagePath } = this.config;
       const pages = this.items
@@ -83,28 +85,21 @@ class ProjectBuilder {
   }
 
   buildPsds() {
-    let queue = Promise.resolve();
+    const psdTasks = [];
     this.items.forEach(item => {
-      queue = queue.then(() => this.buildPsd(item));
+      const psdTask = this.buildPsd(item);
+      psdTasks.push(psdTask);
     })
-    return queue;
+    return psdTasks;
   }
 
-  async buildPsd({
+  buildPsd({
     type,
     name,
     parsedPsd
   }) {
-    const {
-      // scale,
-      // width,
-      unit,
-      containerTag,
-      imgTag,
-      classAttrName,
-      selector,
-      files
-    } = this.config;
+
+    const { files } = this.config;
     let savePath;
 
     if(type === 'comp') {
@@ -116,10 +111,66 @@ class ProjectBuilder {
     mkdirSync(savePath);
     mkdirSync(`${this.imgPath}/${name}`);
     
-    const descendants = parsedPsd.psd.tree().descendants();
+    const {
+      html,
+      css,
+      images
+    } = this.analysisPsd(parsedPsd.psd);
+
+    const fileTasks = files.map(item => {
+      // 替换name关键字
+      const fileName = item.fileName.replace(/#name/g, name);
+      const promsie = new Promise((resolve, reject) => {
+        // 替换css、html关键字
+        const content = (item.template || '')
+          .replace(/#css/g, css)
+          .replace(/#html/g, html);
+
+        // 写入文件
+        fs.writeFile(`${savePath}/${fileName}`, content, err => {
+          if(err) {
+            console.error(err);
+            return reject(err);
+          }
+          return resolve();
+        });
+      })
+      return {
+        fileName,
+        promsie,
+      }
+    })
+
+    const imgTasks = images.map(item => {
+      return {
+        savePath: item.savePath,
+        // todo 并发很卡
+        promise: item.layer.saveAsPng(item.savePath)
+      }
+    })
+
+    return {
+      name,
+      parsedPsd,
+      fileTasks,
+      imgTasks
+    }
+  }
+
+  analysisPsd(psd) {
+    const {
+      // scale,
+      // width,
+      unit,
+      containerTag,
+      imgTag,
+      classAttrName,
+      selector
+    } = this.config;
+    const descendants = psd.tree().descendants();
     let html = '',
         css = '';
-    const savePngTasks = [];
+    const images = [];
     descendants.forEach((item, index) => {
       const nodePath = item.path();
       const nodeClass = nodePath.replace(/\//g, '-');
@@ -137,7 +188,7 @@ class ProjectBuilder {
           left: ${left}${unit};
           width: ${width}${unit};
           height: ${height}${unit};
-          z-index: ${parsedPsd.layerCount - index};
+          z-index: ${psd.layerCount - index};
         }
       `;
       if (item.hasChildren()) {
@@ -152,8 +203,7 @@ class ProjectBuilder {
       } else {
         const imgSrc = `${this.imgPath}/${name}/${nodePath}.png`;
         const tagStr = `<${imgTag} ${classAttrName}="${nodeClass}" src="${imgSrc}"/>`;
-        // item.saveAsPng(imgSrc);
-        savePngTasks.push({
+        images.push({
           layer: item,
           savePath: imgSrc
         });
@@ -167,64 +217,17 @@ class ProjectBuilder {
         }
       }
     })
-    files.forEach(item => {
-      const content = (item.template || '').replace(/#css/g, css)
-        .replace(/#html/g, html);
-      const fileName = item.fileName.replace(/#name/g, name);
-      fs.writeFile(`${savePath}/${fileName}`, content, err => {
-        if(err) {
-          console.error(err);
-        }
-      });
-    })
-    // 串行方式执行生成图片，并且放到最后
-    let queue = Promise.resolve();
-    savePngTasks.forEach(item => {
-      queue = queue.then(() => {
-        return item.layer.saveAsPng(item.savePath);
-      });
-    })
-    return queue;
-  }
+
+    return {
+      html,
+      css,
+      images
+    }
+  } 
 
   static insertStr(soure, start, newStr) {
     return soure.slice(0, start) + newStr + soure.slice(start);
   }
 }
-
-
-const projectBuilder = new ProjectBuilder({
-  items: psdItems,
-  output: outputPath.value,
-  config: currentBuildConfig
-})
-
-// 构建最外层文件夹：output、imgPath、pagePath、componentPath
-// 构建路由配置：createRouter
-// 构建页面外层：html+css路径、图片路径
-// html、css写入文件
-// 图片树：构建文件夹、生成png
-
-projectBuilder.build().then(res => {
-  res = [
-    {
-      name: 'home',
-      info: {
-        width,
-        height,
-        fileSize,
-        layerCount,
-        psd,
-      },
-      promise: Promise.resolve(),
-      imgs: [
-        {
-          path: '/xxx/xx',
-          promise: Promise.resolve(),
-        }
-      ]
-    }
-  ]
-})
 
 export default ProjectBuilder;

@@ -27,7 +27,6 @@ const requestOptions = {
 };
 
 function tinyCompress(imgPath) {
-  console.log(imgPath);
   return new Promise((resolve, reject) => {
     fs.stat(imgPath, (err, stats) => {
       if (err) return reject(err);

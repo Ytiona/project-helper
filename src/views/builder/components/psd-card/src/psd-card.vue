@@ -44,7 +44,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import parsePsd from '@/core/analysis';
+import analysisPsd from '@/core/analysis';
 import { getFileName } from '@/lib/utils';
 const props = defineProps({
   filePath: {
@@ -74,7 +74,7 @@ function handleParse() {
   parseLoading.value = true;
   fileName.value = getFileName(props.filePath);
   name.value = fileName.value;
-  parsePsd(props.filePath).then(res => {
+  analysisPsd(props.filePath).then(res => {
     parsedPsd.value = res;
   }).finally(() => {
     parseLoading.value = false;

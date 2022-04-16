@@ -7,4 +7,6 @@
  */
 const path = require('path');
 
-export const DEFAULT_OUTPUT = path.resolve(__dirname, '../../output');
+// export const DEFAULT_OUTPUT = path.resolve('F:\Nodejs\project-helper-vite\design\output');
+
+export const DEFAULT_OUTPUT = 'F:\\Nodejs\\project-helper-vite\\design\\output';
