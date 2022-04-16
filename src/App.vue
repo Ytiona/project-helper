@@ -87,6 +87,14 @@ function gotoPage(menu) {
   router.replace(menu.path);
 }
 
+ipc.on('maximize', () => {
+  isMaximized.value = true;
+})
+
+ipc.on('unmaximize', () => {
+  isMaximized.value = false;
+})
+
 function minimizeWin() {
   ipc.send('min');
 }

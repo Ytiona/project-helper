@@ -25,6 +25,14 @@ function createWindow () {
   mainWindow.loadURL('http://localhost:3000/');
 
   require("@electron/remote/main").enable(mainWindow.webContents);
+
+
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send('maximize');
+  })
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send('unmaximize');
+  })
 }
 
 app.whenReady().then(() => {
