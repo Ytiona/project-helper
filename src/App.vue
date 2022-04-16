@@ -54,8 +54,6 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import Button from "./ly-ui/button";
-import Poptip from './ly-ui/poptip';
 
 const { ipcRenderer: ipc } = require('electron');
 
