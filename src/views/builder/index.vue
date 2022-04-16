@@ -2,7 +2,7 @@
   <div class="main">
     <FileChoose 
       class="file-choose"
-      :filters="[{ name: 'PSD文件', extensions: 'psd' }]" 
+      :filters="[{ name: 'PSD文件', extensions: ['psd'] }]" 
       empty-tips="拖入文件夹/PSD文件"
       @on-files-change="resetPsdItems()"
     >

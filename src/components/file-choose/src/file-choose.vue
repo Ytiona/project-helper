@@ -49,7 +49,12 @@ watch(fileList, () => {
   emit('on-files-change', fileList.value);
 })
 
-
+defineExpose({
+  fileList,
+  chooseFiles,
+  removeFile,
+  clear,
+})
 
 </script>
 

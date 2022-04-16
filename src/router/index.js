@@ -21,6 +21,13 @@ const routes = [
     meta: {
       title: 'PSD解析'
     }
+  },
+  {
+    path: '/temp',
+    component: () => import('@/views/temp/index.vue'),
+    meta: {
+      title: 'temp'
+    }
   }
 ]
 

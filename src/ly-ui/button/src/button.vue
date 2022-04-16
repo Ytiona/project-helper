@@ -23,10 +23,12 @@ defineProps({
 .ly-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   border: 1px solid var(--primary-color);
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
+  white-space: nowrap;
   color: var(--l-txt);
   background: var(--stress-bg);
   cursor: pointer;
