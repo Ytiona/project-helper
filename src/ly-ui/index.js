@@ -11,6 +11,7 @@ import checkbox from './checkbox';
 import modal from './modal';
 import message from './message';
 import notice from './notice';
+import poptip from './poptip';
 
 export const Input = input;
 export const Button = button;
@@ -18,6 +19,7 @@ export const Checkbox = checkbox;
 export const Modal = modal;
 export const Message = message;
 export const Notice = notice;
+export const Poptip = poptip;
 
 
 export default {
@@ -26,6 +28,7 @@ export default {
     app.component('Button', button);
     app.component('Checkbox', Checkbox);
     app.component('Modal', Modal);
+    app.component('Poptip', Poptip);
 
     app.config.globalProperties.$Message = Message;
     app.config.globalProperties.$Notice = Notice;
