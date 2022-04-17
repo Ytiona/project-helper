@@ -1,0 +1,18 @@
+{
+  "input": { 
+    "size": 887, 
+    "type": "image/png" 
+  },
+  "output": {
+    "size": 785,
+    "type": "image/png",
+    "width": 81,
+    "height": 81,
+    "ratio": 0.885,
+    "url": "https://tinypng.com/web/output/7aztz90nq5p9545zch8gjzqg5ubdatd6"
+  },
+  "err": { 
+    "error": "Bad request", 
+    "message": "Request is invalid" 
+  }
+}
