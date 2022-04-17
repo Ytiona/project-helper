@@ -7,7 +7,7 @@
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">压缩配置</Button>
+        <Button icon="setting-fill" @click="configVisbile = true">图片处理配置</Button>
       </template>
       <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
@@ -36,12 +36,12 @@
     <div class="right">
       <span class="compress-btn" @click="onCompressAll()">
         <i class="iconfont icon-compress"></i>
-        全部压缩
+        一键处理
       </span>
     </div>
   </div>
 
-  <Modal v-model:show="configVisbile" title="压缩配置">
+  <Modal v-model:show="configVisbile" title="图片处理配置">
     <CompressConfig/>
   </Modal>
 
@@ -107,7 +107,7 @@ function onCompressAll() {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 90px;
+    height: 110px;
     padding: 10px;
     box-sizing: border-box;
     border: 1px dashed currentColor;

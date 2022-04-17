@@ -9,10 +9,10 @@ const routes = [
     }
   },
   {
-    path: '/tiny-compress',
-    component: () => import('@/views/tiny-compress/index.vue'),
+    path: '/pic-handle',
+    component: () => import('@/views/pic-handle/index.vue'),
     meta: {
-      title: 'Tiny压缩'
+      title: '图片批量处理'
     }
   },
   {

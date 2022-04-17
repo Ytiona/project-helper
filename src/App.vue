@@ -19,13 +19,14 @@
           v-for="(item, index) in menus"
           :key="index"
           :class="{ active: currentPath === item.path }"
+          :title="item.desc"
           class="menu-item"
           @click="gotoPage(item)"
         >
           <i :class="`iconfont icon-${item.icon}`" />
           <div class="right">
             <div class="title">{{ item.title }}</div>
-            <div class="desc">{{ item.desc }}</div>
+            <div class="desc ellipsis">{{ item.desc }}</div>
           </div>
         </div>
       </div>
@@ -68,10 +69,10 @@ const menus = [
     desc: "PSD解析-Tiny压缩-项目构建",
   },
   {
-    path: "/tiny-compress",
+    path: "/pic-handle",
     icon: "compress",
-    title: "Tiny压缩",
-    desc: "Tinypng压缩，破解限制",
+    title: "图片批量处理",
+    desc: "尺寸修改，本地压缩、Tinypng压缩（破解）",
   },
   {
     path: "/psd-analysis",
@@ -211,6 +212,10 @@ function closeWin() {
       margin-right: 10px;
       font-size: 46px;
       color: var(--primary-color);
+    }
+    .right {
+      flex: 1;
+      overflow: hidden;
     }
   }
 }

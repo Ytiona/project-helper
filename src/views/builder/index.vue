@@ -7,7 +7,7 @@
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">构建配置：{{currentBuildType.title}}</Button>
+        <Button icon="setting-fill" @click="configVisbile = true">构建配置 | 当前：{{currentBuildType.title}}</Button>
       </template>
       <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
@@ -88,7 +88,7 @@ const outputPath = ref(DEFAULT_OUTPUT);
 const buildConfig = ref(null);
 const psdItems = [];
 let currentBuildConfig;
-let currentBuildType = ref({});
+const currentBuildType = ref({});
 onMounted(() => {
   currentBuildType.value = buildConfig.value.currentBuildType;
   currentBuildConfig = buildConfig.value.currentOptions;
@@ -120,7 +120,7 @@ async function onConfirmBuildConfig() {
     currentBuildConfig = buildConfig.value.currentOptions;
     currentBuildType.value = buildConfig.value.currentBuildType;
     configVisbile.value = false;
-    Message.success('已切换构建配置');
+    Message.success(`构建配置已切换为：${currentBuildType.value.title}`);
   } catch(errs) {}
 }
 
