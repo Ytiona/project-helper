@@ -12,7 +12,7 @@ const routes = [
     path: '/pic-handle',
     component: () => import('@/views/pic-handle/index.vue'),
     meta: {
-      title: '图片批量处理'
+      title: 'Tiny压缩'
     }
   },
   {

@@ -71,8 +71,8 @@ const menus = [
   {
     path: "/pic-handle",
     icon: "compress",
-    title: "图片批量处理",
-    desc: "尺寸修改，本地压缩、Tinypng压缩（破解）",
+    title: "Tiny压缩",
+    desc: "Tinypng压缩（破解），最小最大体积限制，最大尺寸限制",
   },
   {
     path: "/psd-analysis",

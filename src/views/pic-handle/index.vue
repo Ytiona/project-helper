@@ -7,7 +7,7 @@
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">图片处理配置</Button>
+        <Button icon="setting-fill" @click="configVisbile = true">压缩配置</Button>
       </template>
       <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
@@ -30,19 +30,19 @@
 
   <div class="footer">
     <div class="left">
-      <Checkbox v-model:value="replaceSource">替换原图</Checkbox>
+      <Checkbox v-model:value="store.replaceSource">替换原图</Checkbox>
       <div class="tips">提示：不替换会在同目录下创建带 {{ COMPRESS_IMG_PREFIX }} 前缀的同名图片</div>
     </div>
     <div class="right">
-      <span class="compress-btn" @click="onCompressAll()">
+      <span class="compress-btn" @click="batchHandle()">
         <i class="iconfont icon-compress"></i>
-        一键处理
+        一键压缩
       </span>
     </div>
   </div>
 
-  <Modal v-model:show="configVisbile" title="图片处理配置">
-    <CompressConfig/>
+  <Modal v-model:show="configVisbile" title="图片处理配置" :width="600" @on-ok="onConfirmConfig">
+    <Config ref="configRef"/>
   </Modal>
 
   <Modal v-model:show="previewVisible" title="图片预览" footer-hide :width="800">
@@ -55,24 +55,23 @@ import { ref } from 'vue';
 import Modal from '@/ly-ui/modal';
 import FileChoose from '@/components/file-choose';
 import ImgCard from './components/img-card';
-import CompressConfig from './components/compress-config';
+import Config from './components/config';
 import { useLocalStorage } from '@/lib/hooks';
 import { COMPRESS_IMG_PREFIX } from '@/constants/routine';
+import usePicHandleStore from "@/views/pic-handle/store";
 
-const fileChoose = ref(null);
+const store = usePicHandleStore();
 
-const configVisbile = ref(false);
 
-const replaceSource = useLocalStorage('replaceSource', true);
+
+// const replaceSource = useLocalStorage('replaceSource', true);
 
 const imgItems = [];
-
 function setImgItems(el) {
   if(el) {
     imgItems.push(el);
   }
 }
-
 function resetPsdItems() {
   imgItems.length = 0; // 清空数组，保证引用不变
 }
@@ -84,7 +83,17 @@ function onPreview(base64Img) {
   previewVisible.value = true;
 }
 
-function onCompressAll() {
+const configVisbile = ref(false);
+const configRef = ref(null);
+function onConfirmConfig() {
+  configRef.value.getConfig(config => {
+    console.log('校验通过', config);
+    store.setConfig(config);
+    configVisbile.value = false;
+  })
+}
+
+function batchHandle() {
   imgItems.forEach(item => item.compress());
 }
 

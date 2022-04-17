@@ -12,4 +12,4 @@ const path = require('path');
 export const DEFAULT_OUTPUT = 'F:\\Nodejs\\project-helper-vite\\design\\output';
 
 
-export const COMPRESS_IMG_PREFIX = '[compress]-'
+export const COMPRESS_IMG_PREFIX = '[handled]-'

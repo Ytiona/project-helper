@@ -173,6 +173,7 @@
   // 类型校验
   _validateType(rule, value, field) {
     const { type } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (type) {
       const { oneOf, capitalize } = Validator;
       // 有效的type，添加对应的类型校验
@@ -191,6 +192,7 @@
   // 正则校验
   _validatePattern(rule, value, field) {
     const { pattern } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (pattern) {
       // 有效的正则，添加正则校验
       if (Validator.isRegexp(pattern)) {
@@ -207,6 +209,7 @@
   // 自定义校验
   async _customValidate(rule, value, field) {
     const { validator } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (validator) {
       // 自定义校验
       if (Validator.isFunction(validator)) {
@@ -241,6 +244,7 @@
   // 最大长度校验
   _validateMaxlen(rule, value, field) {
     const { maxlength } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (maxlength) {
       if (Validator.isInteger(maxlength) && maxlength > 0) {
         return value.length <= maxlength;
@@ -253,6 +257,7 @@
   // 最小长度校验
   _validateMinlen(rule, value, field) {
     const { minlength } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (minlength) {
       if (Validator.isInteger(minlength) && minlength > 0) {
         return value.length >= minlength;
@@ -265,6 +270,7 @@
   // 枚举校验
   _validateEnum(rule, value, field) {
     const { enum: list } = rule;
+    if(Validator.isEmpty(value)) return true;
     if (list) {
       if (Validator.isArray(list)) {
         return Validator.oneOf(value, list);

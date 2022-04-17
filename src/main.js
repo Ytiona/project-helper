@@ -14,10 +14,12 @@ import '@/assets/style/base.css';
 import LyUi from '@/ly-ui';
 import '@/lib/utils';
 import '@/lib/lodash';
+import { createPinia } from 'pinia'
 
 const app = createApp(App);
 
 app.use(router);
+app.use(createPinia());
 
 app.mount('#app');
 
