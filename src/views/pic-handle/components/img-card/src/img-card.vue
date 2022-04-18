@@ -11,7 +11,7 @@
     <div class="middle">
       <div class="middle__top">
         <span class="name">{{ image.name }}</span>
-        <span class="size">{{ sizeStr }}</span>
+        <span class="size">{{ handleSize(image.size) }}</span>
       </div>
       <div class="info">
         <template v-if="readLoading">
@@ -19,7 +19,7 @@
         </template>
         <template v-else>
           <span class="item">W: {{ image.width }} | H :{{ image.height }}</span>
-          <span class="label">预估处理后：</span>
+          <span class="label">处理后：</span>
           <span class="item">W: {{ handledWidth }} | H: {{ handledHeight }}</span>
         </template>
       </div>
@@ -28,7 +28,20 @@
       </div>
     </div>
     <div class="right">
-      <Button class="btn" @click="startHandle">{{ loading ? '压缩中' : '压缩'}}</Button>
+      <template v-if="!isInit">
+        <div class="compress-compressLoading" v-if="compressLoading">
+          <div class="ani-rotate load-wrap">
+            <i class="iconfont icon-load"/>
+          </div>
+        </div>
+        <div class="compress-res" v-else>
+          <div :class="['perc', resTypeCls]">
+            <i class="iconfont icon-decline"></i>
+            <span class="txt">{{ compressPercentage }}</span>
+          </div>
+          <div class="res-size">{{ handleSize(compressSize) }}</div>
+        </div>
+      </template>
     </div>
     <i class="iconfont icon-close" @click="remove()" />
   </div>
@@ -40,7 +53,7 @@ import { reactive, watch, ref, watchEffect, computed } from "vue";
 import { handleSize } from "@/lib/utils";
 import usePicHandleStore from "@/views/pic-handle/store";
 import Validator from "@/lib/validator";
-import { COMPRESS_IMG_PREFIX } from '@/constants/routine';
+import { COMPRESS_IMG_PREFIX } from '@/views/pic-handle/constants';
 import { defaultConfig } from '@/views/pic-handle/constants';
 
 const path = require("path");
@@ -70,11 +83,25 @@ const image = reactive({
 let jimpImage;
 
 const readLoading = ref(true);
-const loading = ref(false);
+const isInit = ref(true);
+const compressLoading = ref(false);
+const compressSize = ref(null);
 
 const handledWidth = ref(null);
 const handledHeight = ref(null);
 
+const resTypeCls = computed(() => {
+  if(compressSize.value > image.size) {
+    return 'error';
+  }
+  return 'success';
+})
+
+const compressPercentage = computed(() => {
+  return ((compressSize.value / image.size) * 100).toFixed(0) + '%';
+})
+
+// 计算本地处理后的宽高
 watchEffect(() => {
   const { maxHeight, maxWidth } = store.config;
   const { width, height } = image;
@@ -93,12 +120,7 @@ watchEffect(() => {
   handledWidth.value = _handledWidth;
 })
 
-const sizeStr = ref("");
-
-watchEffect(() => {
-  sizeStr.value = handleSize(image.size);
-});
-
+// 读取图片信息，并创建jimp实例
 watch(
   () => props.filePath,
   async (value) => {
@@ -117,9 +139,6 @@ watch(
       res.getBase64Async(Jimp.AUTO).then((res) => {
         image.base64 = res;
       });
-      // image
-      //   .scaleToFit(500, Jimp.AUTO) // resize
-      //   .writeAsync(value); // save
     });
   },
   {
@@ -144,17 +163,17 @@ function onPathExplorer() {
   shell.showItemInFolder(props.filePath);
 }
 
-async function startHandle() {
-  if(loading.value) return;
-  loading.value = true;
-  console.log(outputFilePath.value);
+async function compress() {
+  if(compressLoading.value) return;
+  isInit.value = false;
+  compressLoading.value = true;
   try {
     await localHandle(outputFilePath.value);
-    await tinyCompress(outputFilePath.value);
+    await _tinyCompress(outputFilePath.value);
   } catch(err) {
     console.log(err);
   }
-  loading.value = false;
+  compressLoading.value = false;
 }
 
 function localHandle(output) {
@@ -183,9 +202,23 @@ function localHandle(output) {
   return current.writeAsync(output);
 }
 
+function _tinyCompress(filePath) {
+  const { maxSize, minSize } = store.config;
+  if(
+    !Validator.isEmpty(minSize) && image.size >= minSize ||
+    !Validator.isEmpty(maxSize) && image.size <= maxSize
+  ) {
+    return tinyCompress(filePath).then(res => {
+      console.log(res);
+      compressSize.value = res?.output?.size;
+      return res;
+    })
+  }
+}
+
 defineExpose({
   image,
-  handle: startHandle
+  compress
 })
 
 </script>
@@ -264,9 +297,50 @@ defineExpose({
     }
   }
   .right {
-    margin-left: 10px;
-    .btn {
-      min-width: 80px;
+    .compress-compressLoading {
+      .load-wrap {
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .iconfont {
+          font-size: 30px;
+          color: var(--primary-color);
+        }
+      }
+    }
+    .compress-res {
+      text-align: center;
+      .perc {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 0;
+        .iconfont {
+          font-size: 24px;
+        }
+        .txt {
+          font-size: 24px;
+        }
+        &.success {
+          color: var(--success-color);
+        }
+        &.error {
+          color: var(--error-color);
+          .iconfont {
+            transform: rotate(180deg) translateY(1px);
+          }
+        }
+      }
+      .res-size {
+        display: inline-block;
+        padding: 2px 4px;
+        font-size: 12px;
+        border-radius: 4px;
+        color: var(--block-bg);
+        background: var(--primary-color);
+      }
     }
   }
   .icon-close {

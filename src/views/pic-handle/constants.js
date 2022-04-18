@@ -6,6 +6,9 @@
   maxSize: 5
 }
 
+const COMPRESS_IMG_PREFIX = '[handled]-';
+
 export {
-  defaultConfig
+  defaultConfig,
+  COMPRESS_IMG_PREFIX
 }

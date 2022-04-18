@@ -56,15 +56,10 @@ import Modal from '@/ly-ui/modal';
 import FileChoose from '@/components/file-choose';
 import ImgCard from './components/img-card';
 import Config from './components/config';
-import { useLocalStorage } from '@/lib/hooks';
-import { COMPRESS_IMG_PREFIX } from '@/constants/routine';
+import { COMPRESS_IMG_PREFIX } from './constants';
 import usePicHandleStore from "@/views/pic-handle/store";
 
 const store = usePicHandleStore();
-
-
-
-// const replaceSource = useLocalStorage('replaceSource', true);
 
 const imgItems = [];
 function setImgItems(el) {

@@ -6,7 +6,8 @@
   --dark-border: #7e7eb8;
   --l-txt: #ffffff;
   --primary-color: #afafff;
-  --error-color: rgb(225,23,129);
+  --error-color: rgb(255 47 153);
+  --success-color: #00ffa1;
 }
 
 .block-wrap {

@@ -38,6 +38,7 @@ function tinyCompress(imgPath) {
       ) {
         return compressRequest(imgPath).then(resolve, reject);
       }
+      return reject('File error');
     });
   })
 }
