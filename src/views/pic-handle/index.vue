@@ -3,7 +3,7 @@
     <FileChoose 
       class="file-choose"
       :filters="[{ name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'webp'] }]" 
-      empty-tips="拖入文件夹/图片文件"
+      empty-tips="点击导入图片文件"
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>

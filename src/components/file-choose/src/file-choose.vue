@@ -29,7 +29,7 @@ const props = defineProps({
   },
   emptyTips: {
     type: String,
-    default: '拖入文件夹/文件'
+    default: '点击导入文件'
   }
 })
 
