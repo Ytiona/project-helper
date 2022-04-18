@@ -18,7 +18,7 @@
         <div
           v-for="(item, index) in menus"
           :key="index"
-          :class="{ active: currentPath === item.path }"
+          :class="{ active: currentRoute.path === item.path }"
           :title="item.desc"
           class="menu-item"
           @click="gotoPage(item)"
@@ -74,17 +74,17 @@ const menus = [
     title: "Tiny压缩",
     desc: "Tinypng压缩（破解），最小最大体积限制，最大尺寸限制",
   },
-  {
-    path: "/psd-analysis",
-    icon: "analysis",
-    title: "PSD解析",
-    desc: "将PSD文件中图层导出为图片",
-  },
+  // {
+  //   path: "/psd-analysis",
+  //   icon: "analysis",
+  //   title: "PSD解析",
+  //   desc: "将PSD文件中图层导出为图片",
+  // },
 ];
-const currentPath = ref("/");
+
+const { currentRoute } = router;
 
 function gotoPage(menu) {
-  currentPath.value = menu.path;
   router.replace(menu.path);
 }
 
@@ -224,7 +224,7 @@ function closeWin() {
 <style lang="less">
 // @import "./assets/style/iconfont/iconfont.css";
 // @import "./assets/style/fonts.css";
-@import "//at.alicdn.com/t/font_2807358_1np9cf0719g.css";
+@import "//at.alicdn.com/t/font_2807358_r4csocop37.css";
 body {
   font-family: SourceHanSansCN Arial, PingFang SC, Microsoft YaHei, SimSun,
     sans-serif, Hiragino Sans GB, Helvetica, "sans-serif", Lantinghei SC,
