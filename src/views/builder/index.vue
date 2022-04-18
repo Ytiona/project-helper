@@ -73,7 +73,7 @@ import FileChoose from '@/components/file-choose';
 import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
 import ProjectBuilder from '@/core/builder';
-import { DEFAULT_OUTPUT } from '@/constants/routine';
+import { DEFAULT_OUTPUT } from './constants';
 import tinyCompress from '@/core/tiny-compress';
 import { useLocalStorage } from '@/lib/hooks';
 
