@@ -9,7 +9,7 @@ let mainWindow;
 // Menu.setApplicationMenu(null);
 function createWindow () {
   mainWindow = new BrowserWindow({
-    width: 1600,
+    width: 1300,
     height: 800,
     minWidth: 1200,
     minHeight: 700,
@@ -21,7 +21,7 @@ function createWindow () {
       preload: __dirname + '/preload.js'
     }
   })
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
   mainWindow.loadURL('http://localhost:3000/');
 
   require("@electron/remote/main").enable(mainWindow.webContents);
