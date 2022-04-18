@@ -1,16 +1,19 @@
 import { createRouter, createWebHashHistory} from "vue-router";
 
+import ProjectBuilder from '@/views/builder/index.vue';
+import TinyCompress from '@/views/pic-handle/index.vue';
+
 const routes = [
   {
     path: '/',
-    component: () => import('@/views/builder/index.vue'),
+    component: ProjectBuilder,
     meta: {
       title: '项目构建'
     }
   },
   {
     path: '/pic-handle',
-    component: () => import('@/views/pic-handle/index.vue'),
+    component: TinyCompress,
     meta: {
       title: 'Tiny压缩'
     }
