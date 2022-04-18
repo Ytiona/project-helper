@@ -29,7 +29,7 @@
             <input type="text" v-model="currentOptions.unit" />
           </span>
         </div>
-        <div class="item">
+        <!-- <div class="item">
           <span class="label">缩放比例：</span>
           <span class="content">
             <input type="number" v-model="currentOptions.scale" />
@@ -40,7 +40,7 @@
           <span class="content">
             <input type="number" v-model="currentOptions.width" />
           </span>
-        </div>
+        </div> -->
         <div class="item">
           <span class="label">容器标签：</span>
           <span class="content">
