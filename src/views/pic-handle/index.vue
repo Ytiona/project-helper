@@ -45,6 +45,7 @@
     <Config ref="configRef"/>
   </Modal>
 
+  <!-- 图片预览放在父组件，享元模式 -->
   <Modal v-model:show="previewVisible" title="图片预览" footer-hide :width="800">
     <img :src="previewBase64Img" class="preview-img"/>
   </Modal>
@@ -71,6 +72,7 @@ function resetPsdItems() {
   imgItems.length = 0; // 清空数组，保证引用不变
 }
 
+// 压缩图预览
 const previewVisible = ref(false);
 const previewBase64Img = ref('');
 function onPreview(base64Img) {
@@ -78,11 +80,11 @@ function onPreview(base64Img) {
   previewVisible.value = true;
 }
 
+// 压缩配置
 const configVisbile = ref(false);
 const configRef = ref(null);
 function onConfirmConfig() {
   configRef.value.getConfig(config => {
-    console.log('校验通过', config);
     store.setConfig(config);
     configVisbile.value = false;
   })

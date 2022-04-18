@@ -7,7 +7,7 @@
           :key="index"
           :class="[
             'type-item',
-            { active: item.title === currentBuildType.title },
+            { active: item.title === currentBuildConfig.title },
           ]"
           @click="toggleBuildPreset(item)"
         >
@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="options">
-      <div class="type-name" v-if="!currentBuildType.type">
+      <div class="type-name" v-if="!currentBuildConfig.type">
         <span class="label">配置名称：</span>
         <span class="content">
           <input type="text" v-model="customBuildTitle" placeholder="请输入" />
@@ -128,7 +128,7 @@
       </div>
       <div class="footer">
         <div>
-          <Button @click="deleteOptions()" v-if="currentBuildType.deletable">删除配置</Button>
+          <Button @click="deleteOptions()" v-if="currentBuildConfig.deletable">删除配置</Button>
         </div>
         <div class="flex">
           <Button @click="resetOptions()">重置配置</Button>
@@ -170,13 +170,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { Message, Modal } from '@/ly-ui';
 import buildOptionsPreset, { customConfigDefault } from "@/constants/build-options-preset";
 import RouterTemplate from "./router-template.vue";
 import PageFileTemplate from "./page-file-template.vue";
 import Validator from "@/lib/validator";
 import storage from '@/lib/local-storage';
+import useBuilderStore from '../../../store';
+
+const store = useBuilderStore();
 
 const localBuildOptionsPreset =
   storage.get("buildOptionsPreset") || {};
@@ -224,27 +227,39 @@ const rules = {
 const validator = new Validator({ rules });
 
 const customBuildTitle = ref("");
-const currentBuildType = ref();
+const currentBuildConfig = ref();
 const currentOptions = ref({});
-// 初始切换至第一个预设
-toggleBuildPreset(buildTypes.value[0]);
 function toggleBuildPreset(preset) {
-  currentBuildType.value = preset;
-  currentOptions.value = _.cloneDeep(currentBuildType.value.options);
+  currentBuildConfig.value = preset;
+  currentOptions.value = _.cloneDeep(currentBuildConfig.value.options);
 }
+
+initCurrentBuild();
+// 初始切换配置项
+function initCurrentBuild() {
+  let currentBuildConfig;
+  if(store.currentBuildConfigType) {
+    // 从store中取得当前配置项type
+    currentBuildConfig = buildTypes.value.find(item => {
+      return item.type === store.currentBuildConfigType;
+    });
+  }
+  toggleBuildPreset(currentBuildConfig || buildTypes.value[0]);
+}
+
 // 重置当前配置的修改
 function resetOptions() {
-  currentOptions.value = _.cloneDeep(currentBuildType.value.options);
+  currentOptions.value = _.cloneDeep(currentBuildConfig.value.options);
   Message.info("配置已重置");
 }
 
 // 保存配置
 async function saveOptions() {
   validate().then(() => {
-    const { type } = currentBuildType.value;
+    const { type } = currentBuildConfig.value;
     if (type) {
       localBuildOptionsPreset[type] = {
-        ...currentBuildType.value,
+        ...currentBuildConfig.value,
         options: currentOptions.value,
       };
       Message.success("保存配置成功");
@@ -263,7 +278,7 @@ async function saveOptions() {
 
       // 重置自定义配置
       customBuildTitle.value = '';
-      currentOptions.value = _.cloneDeep(currentBuildType.value.options);
+      currentOptions.value = _.cloneDeep(currentBuildConfig.value.options);
 
       // 将新增的配置选中
       toggleBuildPreset(localBuildOptionsPreset[customType]);
@@ -275,7 +290,7 @@ async function saveOptions() {
 
 // 删除配置
 function deleteOptions() {
-  const { title, type } = currentBuildType.value;
+  const { title, type } = currentBuildConfig.value;
   Modal.confirm({
     title: '温馨提示',
     content: `确定删除配置：${title} ?`,
@@ -370,7 +385,7 @@ function validate() {
 }
 
 defineExpose({
-  currentBuildType,
+  currentBuildConfig,
   currentOptions,
   validate
 })

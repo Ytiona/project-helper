@@ -35,11 +35,17 @@
           </div>
         </div>
         <div class="compress-res" v-else>
-          <div :class="['perc', resTypeCls]">
-            <i class="iconfont icon-decline"></i>
-            <span class="txt">{{ compressPercentage }}</span>
-          </div>
-          <div class="res-size">{{ handleSize(compressSize) }}</div>
+          <template v-if="compressSuccess">
+            <template v-if="compressSize !== image.size">
+              <div :class="['perc', resTypeCls]">
+                <i class="iconfont icon-decline"></i>
+                <span class="txt">{{ compressPercentage }}</span>
+              </div>
+              <div class="res-size">{{ handleSize(compressSize) }}</div>
+            </template>
+            <div v-else class="unchanged">无变化</div>
+          </template>
+          <div v-else class="compress-fail">压缩失败</div>
         </div>
       </template>
     </div>
@@ -54,19 +60,17 @@ import { handleSize } from "@/lib/utils";
 import usePicHandleStore from "@/views/pic-handle/store";
 import Validator from "@/lib/validator";
 import { COMPRESS_IMG_PREFIX } from '@/views/pic-handle/constants';
-import { defaultConfig } from '@/views/pic-handle/constants';
 
 const path = require("path");
+const fs = require("fs");
 const { shell } = require("electron");
 const Jimp = require("jimp");
-const fs = require("fs");
 
-// 图片名、图片路径、宽高、size、压缩后size、压缩后宽高、压缩、重新压缩
 const props = defineProps({
   remove: Function,
   filePath: String,
   compressConfig: Object,
-});
+})
 
 const emit = defineEmits(["on-preview"]);
 
@@ -78,47 +82,11 @@ const image = reactive({
   width: null,
   height: null,
   size: null,
-});
+})
 
 let jimpImage;
 
 const readLoading = ref(true);
-const isInit = ref(true);
-const compressLoading = ref(false);
-const compressSize = ref(null);
-
-const handledWidth = ref(null);
-const handledHeight = ref(null);
-
-const resTypeCls = computed(() => {
-  if(compressSize.value > image.size) {
-    return 'error';
-  }
-  return 'success';
-})
-
-const compressPercentage = computed(() => {
-  return ((compressSize.value / image.size) * 100).toFixed(0) + '%';
-})
-
-// 计算本地处理后的宽高
-watchEffect(() => {
-  const { maxHeight, maxWidth } = store.config;
-  const { width, height } = image;
-  const ratio = width / height;
-  let _handledWidth = width, 
-      _handledHeight = height;
-  if(!Validator.isEmpty(maxWidth) && width > maxWidth) {
-    _handledWidth = maxWidth;
-    _handledHeight = parseInt(_handledWidth / ratio);
-  }
-  if(!Validator.isEmpty(maxHeight) && _handledHeight > maxHeight) {
-    _handledHeight = maxHeight;
-    _handledWidth = parseInt(_handledHeight * ratio);
-  }
-  handledHeight.value = _handledHeight;
-  handledWidth.value = _handledWidth;
-})
 
 // 读取图片信息，并创建jimp实例
 watch(
@@ -146,32 +114,84 @@ watch(
   }
 );
 
+const isInit = ref(true);
+const compressLoading = ref(false);
+const compressSize = ref(null);
+const compressSuccess = ref(false);
+
+const handledWidth = ref(null);
+const handledHeight = ref(null);
+
+// 压缩结果的class
+const resTypeCls = computed(() => {
+  // 体积变大，标红
+  if(compressSize.value > image.size) {
+    return 'error';
+  }
+  return 'success';
+})
+
+const compressPercentage = computed(() => {
+  const diff = image.size - compressSize.value;
+  return ((diff / image.size) * 100).toFixed(0) + '%';
+})
+
+// 计算本地处理后的宽高
+watchEffect(() => {
+  const { maxHeight, maxWidth } = store.config;
+  const { width, height } = image;
+  const ratio = width / height;
+  let _handledWidth = width, 
+      _handledHeight = height;
+  if(!Validator.isEmpty(maxWidth) && width > maxWidth) {
+    // 如果当前图片宽度大于最大宽度，则等比缩放至最大宽度
+    _handledWidth = maxWidth;
+    _handledHeight = parseInt(_handledWidth / ratio);
+  }
+  if(!Validator.isEmpty(maxHeight) && _handledHeight > maxHeight) {
+    // 如果经过最大宽度限制缩放后，高度仍大于最大高度，则再等比缩放至最大高度
+    _handledHeight = maxHeight;
+    _handledWidth = parseInt(_handledHeight * ratio);
+  }
+  handledHeight.value = _handledHeight;
+  handledWidth.value = _handledWidth;
+})
+
+// 根据是否替换原图的配置，计算输出路径
 const outputFilePath = computed(() => {
   if(!store.replaceSource) {
     const basename = path.basename(props.filePath);
     const dirname = path.dirname(props.filePath);
+    // 添加前缀
     return `${dirname}/${COMPRESS_IMG_PREFIX}${basename}`;
   }
   return props.filePath;
 })
 
+// 点击预览，抛出事件，通过父组件进行预览
 function onPreview() {
   emit("on-preview", image.base64);
 }
 
+// 在资源管理器中打开该图片
 function onPathExplorer() {
   shell.showItemInFolder(props.filePath);
 }
 
+// 压缩
 async function compress() {
   if(compressLoading.value) return;
   isInit.value = false;
   compressLoading.value = true;
   try {
+    // 本地预处理
     await localHandle(outputFilePath.value);
+    // tiny压缩
     await _tinyCompress(outputFilePath.value);
+    compressSuccess.value = true;
   } catch(err) {
     console.log(err);
+    compressSuccess.value = false;
   }
   compressLoading.value = false;
 }
@@ -179,7 +199,10 @@ async function compress() {
 function localHandle(output) {
   const handlers = [];
   // 宽高有变化，则添加resize处理
-  if(handledHeight.value !== image.height || handledWidth.value !== image.width) {
+  if(
+    handledHeight.value !== image.height || 
+    handledWidth.value !== image.width
+  ) {
     handlers.push({
       name: 'resize',
       params: [
@@ -199,17 +222,24 @@ function localHandle(output) {
   handlers.forEach(({ name, params }) => {
     current = current[name](...params);
   })
-  return current.writeAsync(output);
+  // 最后写入输出目录
+  return current.writeAsync(output).then(res => {
+    const stat = fs.statSync(output);
+    compressSize.value = stat.size;
+    return res;
+  })
 }
 
 function _tinyCompress(filePath) {
   const { maxSize, minSize } = store.config;
+  const times = 1024 ** 2;
   if(
-    !Validator.isEmpty(minSize) && image.size >= minSize ||
-    !Validator.isEmpty(maxSize) && image.size <= maxSize
+    // 低于最小体积，则不压缩
+    (Validator.isEmpty(minSize) || image.size >= (minSize * times)) &&
+    // 高于最大体积，则不压缩
+    (Validator.isEmpty(maxSize) || image.size <= (maxSize * times))
   ) {
     return tinyCompress(filePath).then(res => {
-      console.log(res);
       compressSize.value = res?.output?.size;
       return res;
     })
@@ -220,7 +250,6 @@ defineExpose({
   image,
   compress
 })
-
 </script>
 
 <style lang="less" scoped>
@@ -341,6 +370,14 @@ defineExpose({
         color: var(--block-bg);
         background: var(--primary-color);
       }
+    }
+    .unchanged {
+      font-size: 18px;
+      color: var(--warning-color);
+    }
+    .compress-fail {
+      font-size: 18px;
+      color: var(--error-color);
     }
   }
   .icon-close {

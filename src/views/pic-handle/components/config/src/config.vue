@@ -49,7 +49,7 @@
             <input
               type="number"
               v-model.number="config.minSize"
-              placeholder="缺省为0.1Mb"
+              placeholder="缺省为不限制"
             />
           </span>
         </div>

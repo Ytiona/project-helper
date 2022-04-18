@@ -7,7 +7,7 @@
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">构建配置 | 当前：{{currentBuildType.title}}</Button>
+        <Button icon="setting-fill" @click="configVisbile = true">构建配置 | 当前：{{currentBuildConfig.title}}</Button>
       </template>
       <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
@@ -29,12 +29,12 @@
   <div class="footer">
     <div class="left">
       <div class="output-path">
-        <span class="path">输出路径：{{ outputPath }}</span>
+        <span class="path">输出路径：{{ store.outputPath }}</span>
         <span class="choose-btn" @click="onChooseOutputPath()">选择路径</span>
       </div>
     </div>
     <div class="right">
-      <Checkbox v-model:value="openTinyCompress">开启Tiny压缩</Checkbox>
+      <Checkbox v-model:value="store.openTinyCompress">开启Tiny压缩</Checkbox>
       <span class="build-btn" @click="onBuild()">
         <i class="iconfont icon-build"></i>
         开始构建
@@ -43,7 +43,7 @@
   </div>
 
   <Modal v-model:show="configVisbile" title="构建配置" :width="800" @on-ok="onConfirmBuildConfig()">
-    <BuildConfig class="build block" ref="buildConfig"/>
+    <BuildConfig class="build block" ref="buildConfigRef"/>
   </Modal>
 
   <Modal 
@@ -73,57 +73,61 @@ import FileChoose from '@/components/file-choose';
 import BuildConfig from './components/build-config';
 import PsdCard from './components/psd-card';
 import ProjectBuilder from '@/core/builder';
-import { DEFAULT_OUTPUT } from './constants';
 import tinyCompress from '@/core/tiny-compress';
-import { useLocalStorage } from '@/lib/hooks';
+import useBuilderStore from './store';
 
 const remote = require('@electron/remote');
 
-const openTinyCompress = useLocalStorage('openTinyCompress', true);
+const store = useBuilderStore();
 
 const configVisbile = ref(false);
 
+// 构建配置
+let currentBuildOptions;
 const buildLoading = ref(false);
-const outputPath = ref(DEFAULT_OUTPUT);
-const buildConfig = ref(null);
-const psdItems = [];
-let currentBuildConfig;
-const currentBuildType = ref({});
+const buildConfigRef = ref(null);
+const currentBuildConfig = ref({});
+// 初始获取构建配置中的当前配置
 onMounted(() => {
-  currentBuildType.value = buildConfig.value.currentBuildType;
-  currentBuildConfig = buildConfig.value.currentOptions;
+  currentBuildConfig.value = buildConfigRef.value.currentBuildConfig;
+  currentBuildOptions = buildConfigRef.value.currentOptions;
 })
 
+// psd列表
+const psdItems = [];
 function setPsdItems(el) {
   if(el) {
     psdItems.push(el);
   }
 }
-
 function resetPsdItems() {
   psdItems.length = 0; // 清空数组，保证引用不变
 }
 
+// 选择输出路径
 function onChooseOutputPath() {
   remote.dialog.showOpenDialog({
     properties: ['openDirectory']
   }).then(({ canceled, filePaths }) => {
     if(!canceled) {
-      outputPath.value = filePaths[0];
+      store.outputPath = filePaths[0];
     }
   })
 }
 
+// 切换构建配置
 async function onConfirmBuildConfig() {
   try {
-    await buildConfig.value.validate();
-    currentBuildConfig = buildConfig.value.currentOptions;
-    currentBuildType.value = buildConfig.value.currentBuildType;
+    await buildConfigRef.value.validate();
+    currentBuildOptions = buildConfigRef.value.currentOptions;
+    currentBuildConfig.value = buildConfigRef.value.currentBuildConfig;
+    store.currentBuildConfigType = currentBuildConfig.value.type;
     configVisbile.value = false;
-    Message.success(`构建配置已切换为：${currentBuildType.value.title}`);
+    Message.success(`构建配置已切换为：${currentBuildConfig.value.title}`);
   } catch(errs) {}
 }
 
+// 开始构建
 function onBuild() {
   if(!psdItems.length) return Message.error('请添加PSD文件');
   const repeatNames = new Set();
@@ -144,7 +148,7 @@ function onBuild() {
   
   const projectBuilder = new ProjectBuilder({
     items: psdItems,
-    output: outputPath.value,
+    output: store.outputPath,
     config: currentBuildConfig
   });
 
@@ -153,7 +157,7 @@ function onBuild() {
     psdTasks
   } = projectBuilder.build();
 
-  if(openTinyCompress.value) {
+  if(store.openTinyCompress) {
     psdTasks.forEach(({
       fileTasks,
       imgTasks

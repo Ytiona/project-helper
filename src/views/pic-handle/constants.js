@@ -2,7 +2,7 @@
   maxWidth: null,
   maxHeight: null,
   quality: 100,
-  minSize: 0.1,
+  minSize: null,
   maxSize: 5
 }
 

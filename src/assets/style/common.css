@@ -8,6 +8,7 @@
   --primary-color: #afafff;
   --error-color: rgb(255 47 153);
   --success-color: #00ffa1;
+  --warning-color: #ffa500;
 }
 
 .block-wrap {

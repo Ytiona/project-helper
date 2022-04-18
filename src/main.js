@@ -15,11 +15,20 @@ import LyUi from '@/ly-ui';
 import '@/lib/utils';
 import '@/lib/lodash';
 import { createPinia } from 'pinia'
+import lastingPlugin from '@/lib/pinia-lasting-plugin';
 
 const app = createApp(App);
 
+const store = createPinia();
+store.use(lastingPlugin({
+  includes: [
+    'builder',
+    'pic-handle',
+  ]
+}))
+
 app.use(router);
-app.use(createPinia());
+app.use(store);
 
 app.mount('#app');
 
