@@ -2,9 +2,10 @@
   <div class="explain">
     <p class="title">模板关键字说明：</p>
     <ul class="list">
-      <li>#name：页面名称</li>
-      <li>#html：构建后的页面结构(只可用于模板内容)</li>
-      <li>#css：构建后的页面样式(只可用于模板内容)</li>
+      <li>{{commonKeys.name}}：页面名称</li>
+      <li>{{ commonKeys.name__pascal }}：页面名称(大驼峰版)</li>
+      <li>{{ pageKeys.html }}：构建后的页面结构(只可用于模板内容)</li>
+      <li>{{ pageKeys.css }}：构建后的页面样式(只可用于模板内容)</li>
     </ul>
   </div>
   <div class="file-name">
@@ -18,6 +19,7 @@
 
 <script setup>
 import CodeEditor from '@/components/code-editor';
+import { commonKeys, pageKeys } from '@/constants/compiler';
 const props = defineProps({
   template: {
     type: String

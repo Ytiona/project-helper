@@ -9,33 +9,35 @@
   <div class="explain">
     <p class="title">模板关键字说明：</p>
     <ul class="list">
-      <li>#start：替换内容开始位置</li>
-      <li>#end：替换内容结束位置</li>
-      <li>#pagePath：对应配置中的页面路径</li>
-      <li>#name：页面名称</li>
-      <li>#title：页面标题（PSD文件名）</li>
+      <li>{{ commonKeys.name }}：页面名称</li>
+      <li>{{ commonKeys.name__pascal }}：页面名称(大驼峰版)</li>
+      <li>{{ commonKeys.title }}：页面标题（PSD文件名）</li>
+
+      <li>{{ routerKeys.start }}：替换内容开始位置</li>
+      <li>{{ routerKeys.end }}：替换内容结束位置</li>
+      <li>{{ routerKeys.pagePath }}：对应配置中的页面路径</li>
     </ul>
   </div>
   <CodeEditor placeholder="请输入路由模板" v-model:value="template"/>
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import CodeEditor from '@/components/code-editor';
 import { Message } from '@/ly-ui';
+import { commonKeys, routerKeys } from '@/constants/compiler';
 const props = defineProps({
   template: {
     type: String
   }
 })
 
-const reg = /(?<=#start)[\d\D]*(?=#end)/g;
+const reg = new RegExp(`(?<=${routerKeys.start})[\\d\\D]*(?=${routerKeys.end})`, 'g');
 
 function getTemplate(callback) {
   if(reg.test(props.template)) {
     return callback(props.template);
   }
-  const errMsg = '模板必须包含#start、#end关键字';
+  const errMsg = `模板必须包含${routerKeys.start}、${routerKeys.end}关键字`;
   Message.error(errMsg);
 }
 

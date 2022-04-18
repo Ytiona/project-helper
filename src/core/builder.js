@@ -5,8 +5,15 @@
  * @LastEditTime: 2022-03-17 21:13:12
  * @Description: 
  */
-import { mkdirSync } from '@/lib/utils';
+import { mkdirSync, pascalcase } from '@/lib/utils';
+import { commonKeys, pageKeys, routerKeys } from '@/constants/compiler';
+
 const fs = require('fs');
+const path = require('path');
+
+const cmk = commonKeys;
+const pgk = pageKeys;
+const rtk = routerKeys;
 
 class ProjectBuilder {
   items = [];
@@ -14,6 +21,7 @@ class ProjectBuilder {
   config = {};
   imgPath = '';
   pagePath = '';
+  routerPath = '';
   componentPath = '';
   constructor({
     items,
@@ -21,7 +29,7 @@ class ProjectBuilder {
     config
   }) {
     this.items = items;
-    this.output = output;
+    this.output = output.replaceAll('\\', '/');
     this.config = config;
   }
 
@@ -32,9 +40,21 @@ class ProjectBuilder {
     const routerTask = this.makeRouter();
     // 构建psd
     const psdTasks = this.buildPsds();
+
+    const allTask = Promise.allSettled([
+      routerTask,
+      ...psdTasks.reduce((set, cur) => {
+        return set.concat([
+          ...cur.fileTasks.map(item => item.promise),
+          ...cur.imgTasks.map(item => item.promise)
+        ])
+      }, [])
+    ])
+
     return {
       routerTask,
-      psdTasks
+      psdTasks,
+      allTask
     }
   }
 
@@ -42,14 +62,17 @@ class ProjectBuilder {
     const {
       imgPath,
       pagePath,
+      routerPath,
       componentPath
     } = this.config;
-    this.imgPath = `${this.output}/${imgPath}`;
-    this.pagePath = `${this.output}/${pagePath}`;
-    this.componentPath = `${this.output}/${componentPath}`;
+    this.imgPath = path.join(this.output, `/${imgPath}`).replaceAll('\\', '/');
+    this.pagePath = path.join(this.output, `/${pagePath}`).replaceAll('\\', '/');
+    this.routerPath = path.dirname(path.join(this.output, `/${routerPath}`)).replaceAll('\\', '/');
+    this.componentPath = path.join(this.output, `/${componentPath}`).replaceAll('\\', '/');
     mkdirSync(this.output);
     mkdirSync(this.imgPath);
     mkdirSync(this.pagePath);
+    mkdirSync(this.routerPath);
     mkdirSync(this.componentPath);
   }
 
@@ -60,7 +83,7 @@ class ProjectBuilder {
         .filter(item => item.type === 'page')
         .map(item => ({ name: item.name, title: item.fileName }));
 
-      const replaceReg = /(?<=#start)[\d\D]*(?=#end)/g;
+      const replaceReg = new RegExp(`(?<=${rtk.start})[\\d\\D]*(?=${rtk.end})`, 'g');
 
       const replaceMatchRes = routerTemplate.match(replaceReg);
       if(!replaceMatchRes) return;
@@ -69,12 +92,16 @@ class ProjectBuilder {
 
       const generateStr = pages.reduce((whole, cur) => {
         const str = replaceStr
-          .replace(/#name/g, cur.name)
-          .replace(/#title/g, cur.title);
-        return whole + str;
-      }, '')
+          .replaceAll(cmk.name, cur.name)
+          .replaceAll(cmk.name__pascal, pascalcase(cur.name))
+          .replaceAll(cmk.title, cur.title);
+        return `${whole}${str},`;
+      }, '').slice(0, -1)
+      
+      const resReplaceReg = new RegExp(`(${rtk.start})[\\d\\D]*(${rtk.end})`);
+      const result = routerTemplate.replace(resReplaceReg, generateStr)
+        .replaceAll(rtk.pagePath, pagePath);
 
-      const result = routerTemplate.replace(/(#start)[\d\D]*(#end)/g, generateStr).replace(/#pagePath/g, pagePath);
       fs.writeFile(`${this.output}/${routerPath}`, result, err => {
         if(err) {
           reject(err);
@@ -115,16 +142,19 @@ class ProjectBuilder {
       html,
       css,
       images
-    } = this.analysisPsd(parsedPsd.psd);
+    } = this.analysisPsd(parsedPsd, name);
 
     const fileTasks = files.map(item => {
       // 替换name关键字
-      const fileName = item.fileName.replace(/#name/g, name);
-      const promsie = new Promise((resolve, reject) => {
+      const namePascal = pascalcase(name);
+      const fileName = item.fileName.replaceAll(cmk.name, name).replaceAll(cmk.name__pascal, namePascal);
+      const promise = new Promise((resolve, reject) => {
         // 替换css、html关键字
         const content = (item.template || '')
-          .replace(/#css/g, css)
-          .replace(/#html/g, html);
+          .replaceAll(cmk.name, name)
+          .replaceAll(cmk.name__pascal, namePascal)
+          .replaceAll(pgk.css, css)
+          .replaceAll(pgk.html, html);
 
         // 写入文件
         fs.writeFile(`${savePath}/${fileName}`, content, err => {
@@ -137,15 +167,19 @@ class ProjectBuilder {
       })
       return {
         fileName,
-        promsie,
+        promise,
       }
     })
-
+    
     const imgTasks = images.map(item => {
       return {
         savePath: item.savePath,
         // todo 并发很卡
-        promise: item.layer.saveAsPng(item.savePath)
+        promise: new Promise((resolve, reject) => {
+          item.layer.saveAsPng(item.savePath)
+            .then(resolve)
+            .catch(reject)
+        })
       }
     })
 
@@ -157,7 +191,8 @@ class ProjectBuilder {
     }
   }
 
-  analysisPsd(psd) {
+  analysisPsd(parsedPsd, name) {
+    const { psd, layerCount } = parsedPsd;
     const {
       // scale,
       // width,
@@ -165,7 +200,7 @@ class ProjectBuilder {
       containerTag,
       imgTag,
       classAttrName,
-      selector
+      selector,
     } = this.config;
     const descendants = psd.tree().descendants();
     let html = '',
@@ -173,7 +208,7 @@ class ProjectBuilder {
     const images = [];
     descendants.forEach((item, index) => {
       const nodePath = item.path();
-      const nodeClass = nodePath.replace(/\//g, '-');
+      const nodeClass = nodePath.replaceAll('/', '-');
       let { top, left, parent, width, height } = item;
       const hasParent = nodePath.includes('/');
       if (hasParent) {
@@ -188,7 +223,7 @@ class ProjectBuilder {
           left: ${left}${unit};
           width: ${width}${unit};
           height: ${height}${unit};
-          z-index: ${psd.layerCount - index};
+          z-index: ${layerCount - index};
         }
       `;
       if (item.hasChildren()) {
@@ -201,11 +236,12 @@ class ProjectBuilder {
         // 创建对应的目录
         mkdirSync(`${this.imgPath}/${name}/${nodePath}`);
       } else {
-        const imgSrc = `${this.imgPath}/${name}/${nodePath}.png`;
+        const savePath = `${this.imgPath}/${name}/${nodePath}.png`;
+        const imgSrc = `../../${this.config.imgPath}/${name}/${nodePath}.png`;
         const tagStr = `<${imgTag} ${classAttrName}="${nodeClass}" src="${imgSrc}"/>`;
         images.push({
+          savePath,
           layer: item,
-          savePath: imgSrc
         });
         if (hasParent) {
           // 有父级，则插入到父级的容器内
@@ -217,6 +253,9 @@ class ProjectBuilder {
         }
       }
     })
+
+    // 去掉父节点占位注释
+    html = html.replace(/<!--.*-->/g, '');
 
     return {
       html,

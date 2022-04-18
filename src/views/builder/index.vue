@@ -1,20 +1,22 @@
 <template>
   <div class="main">
-    <FileChoose 
+    <FileChoose
       class="file-choose"
-      :filters="[{ name: 'PSD文件', extensions: ['psd'] }]" 
+      :filters="[{ name: 'PSD文件', extensions: ['psd'] }]"
       empty-tips="拖入文件夹/PSD文件"
       @on-files-change="resetPsdItems()"
     >
       <template v-slot:top-right>
-        <Button icon="setting-fill" @click="configVisbile = true">构建配置 | 当前：{{currentBuildConfig.title}}</Button>
+        <Button icon="setting-fill" @click="configVisbile = true"
+          >构建配置 | 当前：{{ currentBuildConfig.title }}</Button
+        >
       </template>
       <template v-slot:file-list="{ fileList, chooseFiles, removeFile }">
         <div class="file-list">
           <PsdCard
             v-for="(item, index) in fileList"
             :key="item"
-            :filePath="item" 
+            :filePath="item"
             :remove="() => removeFile(index)"
             :ref="setPsdItems"
             class="file-item"
@@ -42,41 +44,45 @@
     </div>
   </div>
 
-  <Modal v-model:show="configVisbile" title="构建配置" :width="800" @on-ok="onConfirmBuildConfig()">
-    <BuildConfig class="build block" ref="buildConfigRef"/>
+  <Modal
+    v-model:show="configVisbile"
+    title="构建配置"
+    :width="800"
+    @on-ok="onConfirmBuildConfig()"
+  >
+    <BuildConfig class="build block" ref="buildConfigRef" />
   </Modal>
 
-  <Modal 
-    v-model:show="buildLoading" 
-    footerHide 
-    headHide 
-    :closable="false" 
+  <Modal
+    v-model:show="buildLoading"
+    footerHide
+    headHide
+    :closable="false"
     :width="150"
     :maskClosable="false"
   >
     <div class="build-load">
       <div class="ani-rotate load-icon">
-        <i class="iconfont icon-load"/>
+        <i class="iconfont icon-load" />
       </div>
-      <div class="desc">正在构建...</div>
+      <div class="desc">{{ buildDesc }}</div>
       <!-- <div class="cancel-btn">取消构建</div> -->
     </div>
   </Modal>
-
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import Message from '@/ly-ui/message';
-import Modal from '@/ly-ui/modal';
-import FileChoose from '@/components/file-choose';
-import BuildConfig from './components/build-config';
-import PsdCard from './components/psd-card';
-import ProjectBuilder from '@/core/builder';
-import tinyCompress from '@/core/tiny-compress';
-import useBuilderStore from './store';
+import { onMounted, ref, nextTick } from "vue";
+import Message from "@/ly-ui/message";
+import Modal from "@/ly-ui/modal";
+import FileChoose from "@/components/file-choose";
+import BuildConfig from "./components/build-config";
+import PsdCard from "./components/psd-card";
+import ProjectBuilder from "@/core/builder";
+import tinyCompress from "@/core/tiny-compress";
+import useBuilderStore from "./store";
 
-const remote = require('@electron/remote');
+const remote = require("@electron/remote");
 
 const store = useBuilderStore();
 
@@ -84,19 +90,21 @@ const configVisbile = ref(false);
 
 // 构建配置
 let currentBuildOptions;
+const buildDesc = ref('构建中...');
 const buildLoading = ref(false);
 const buildConfigRef = ref(null);
 const currentBuildConfig = ref({});
+
 // 初始获取构建配置中的当前配置
 onMounted(() => {
   currentBuildConfig.value = buildConfigRef.value.currentBuildConfig;
   currentBuildOptions = buildConfigRef.value.currentOptions;
-})
+});
 
 // psd列表
 const psdItems = [];
 function setPsdItems(el) {
-  if(el) {
+  if (el) {
     psdItems.push(el);
   }
 }
@@ -106,13 +114,15 @@ function resetPsdItems() {
 
 // 选择输出路径
 function onChooseOutputPath() {
-  remote.dialog.showOpenDialog({
-    properties: ['openDirectory']
-  }).then(({ canceled, filePaths }) => {
-    if(!canceled) {
-      store.outputPath = filePaths[0];
-    }
-  })
+  remote.dialog
+    .showOpenDialog({
+      properties: ["openDirectory"],
+    })
+    .then(({ canceled, filePaths }) => {
+      if (!canceled) {
+        store.outputPath = filePaths[0];
+      }
+    });
 }
 
 // 切换构建配置
@@ -124,56 +134,67 @@ async function onConfirmBuildConfig() {
     store.currentBuildConfigType = currentBuildConfig.value.type;
     configVisbile.value = false;
     Message.success(`构建配置已切换为：${currentBuildConfig.value.title}`);
-  } catch(errs) {}
+  } catch (errs) {}
 }
 
 // 开始构建
-function onBuild() {
-  if(!psdItems.length) return Message.error('请添加PSD文件');
+async function onBuild() {
+  if (!psdItems.length) return Message.error("请添加PSD文件");
   const repeatNames = new Set();
   const map = {};
-  psdItems.forEach(item => {
-    if(map[item.name]) {
+  psdItems.forEach((item) => {
+    if (map[item.name]) {
       repeatNames.add(item.name);
     }
     map[item.name] = true;
-  })
-  if(repeatNames.size) {
+  });
+  if (repeatNames.size) {
     Modal.warning({
-      title: '存在重复的页面/组件名称',
-      content: [...repeatNames].join('；')
-    })
+      title: "存在重复的页面/组件名称",
+      content: [...repeatNames].join("；"),
+    });
     return;
   }
-  
+
+  buildDesc.value = '构建中...';
+  buildLoading.value = true;
+
+  await nextTick();
+
+  setTimeout(startBuild, 100);
+}
+
+function startBuild() {
   const projectBuilder = new ProjectBuilder({
     items: psdItems,
     output: store.outputPath,
-    config: currentBuildConfig
+    config: currentBuildOptions,
   });
 
-  const {
-    routerTask,
-    psdTasks
-  } = projectBuilder.build();
 
-  if(store.openTinyCompress) {
-    psdTasks.forEach(({
-      fileTasks,
-      imgTasks
-    }) => {
-      Promise
-        .allSettled(imgTasks.map(item => item.promise))
-        .finally(() => {
-          imgTasks.forEach(({ savePath }) => {
-            tinyCompress(savePath)
-              .then(res => {
-                console.log('ok: ', savePath, res);
-              })
-          })
-        })
-    })
-  }
+  const { psdTasks, allTask } = projectBuilder.build();
+
+  allTask.then(() => {
+    if (store.openTinyCompress) {
+      buildDesc.value = '图片压缩中...';
+      const compressTasks = psdTasks.map(({ imgTasks }) => {
+        return imgTasks.forEach(({ savePath }) => tinyCompress(savePath))
+      })
+      Promise.allSettled(compressTasks).finally(() => {
+        onBuildComplete();
+      })
+    } else {
+      onBuildComplete();
+    }
+  }).catch(onBuildComplete)
+}
+
+function onBuildComplete() {
+  buildLoading.value = false;
+  Modal.success({
+    title: '温馨提示',
+    content: '项目构建完成！'
+  })
 }
 
 </script>

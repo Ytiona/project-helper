@@ -222,9 +222,8 @@ function closeWin() {
 </style>
 
 <style lang="less">
-// @import "./assets/style/iconfont/iconfont.css";
-// @import "./assets/style/fonts.css";
-@import "//at.alicdn.com/t/font_2807358_r4csocop37.css";
+@import "./assets/style/iconfont/iconfont.css";
+// @import "//at.alicdn.com/t/font_2807358_r4csocop37.css";
 body {
   font-family: SourceHanSansCN Arial, PingFang SC, Microsoft YaHei, SimSun,
     sans-serif, Hiragino Sans GB, Helvetica, "sans-serif", Lantinghei SC,

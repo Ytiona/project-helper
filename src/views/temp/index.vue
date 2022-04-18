@@ -9,7 +9,6 @@ import ProjectBuilder from '@/core/builder';
 const remote = require('@electron/remote');
 
 function startBuild() {
-  console.log(window.buildConfig);
   const {
     psdItems,
     outputPath,

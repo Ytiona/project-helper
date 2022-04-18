@@ -50,7 +50,6 @@ export function getFiles(folder, exts) {
       fs.readdir(dir, (err, files) => {
         if (err) return reject(err);
         files.forEach(file => {
-          console.log(file);
           const fullPath = path.join(dir, file);
           const stat = fs.statSync(fullPath);
           if(stat.isDirectory()) {
@@ -80,3 +79,9 @@ export function handleSize(size) {
   }
   return `${size.toFixed(1)}B`;
 }
+
+export function pascalcase(str) {
+  str = str[0].toUpperCase() + str.substr(1);
+  return str.replace(/(-[a-z])|(_[a-z])/g, $1 => $1[1].toUpperCase());
+}
+

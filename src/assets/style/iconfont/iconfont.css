@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 2807358 */
-  src: url('iconfont.woff2?t=1644323510712') format('woff2'),
-       url('iconfont.woff?t=1644323510712') format('woff'),
-       url('iconfont.ttf?t=1644323510712') format('truetype');
+  src: url('iconfont.woff2?t=1650290309607') format('woff2'),
+       url('iconfont.woff?t=1650290309607') format('woff'),
+       url('iconfont.ttf?t=1650290309607') format('truetype');
 }
 
 .iconfont {
@@ -11,6 +11,66 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-decline:before {
+  content: "\e606";
+}
+
+.icon-help:before {
+  content: "\e62e";
+}
+
+.icon-full-screen:before {
+  content: "\e634";
+}
+
+.icon-exit-full-screen:before {
+  content: "\e690";
+}
+
+.icon-warning:before {
+  content: "\e727";
+}
+
+.icon-info:before {
+  content: "\e6bc";
+}
+
+.icon-error:before {
+  content: "\e651";
+}
+
+.icon-success:before {
+  content: "\e66b";
+}
+
+.icon-setting-fill:before {
+  content: "\e8b8";
+}
+
+.icon-arrow-down:before {
+  content: "\eb06";
+}
+
+.icon-arrow-right:before {
+  content: "\eb03";
+}
+
+.icon-arrow-up:before {
+  content: "\eb04";
+}
+
+.icon-arrow-left:before {
+  content: "\eb05";
+}
+
+.icon-clear-empty:before {
+  content: "\e62a";
+}
+
+.icon-add:before {
+  content: "\e622";
 }
 
 .icon-minimize:before {

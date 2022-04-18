@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { Message, Modal } from '@/ly-ui';
 import buildOptionsPreset, { customConfigDefault } from "@/constants/build-options-preset";
 import RouterTemplate from "./router-template.vue";
@@ -223,7 +223,6 @@ const rules = {
     },
   },
 }
-
 const validator = new Validator({ rules });
 
 const customBuildTitle = ref("");

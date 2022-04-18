@@ -80,11 +80,6 @@ function updateFile(imgpath, obj) {
         fs.writeFile(imgpath, body, 'binary', err => {
           if (err) return reject(err);
           return resolve(obj);
-          // console.log(
-          //   `[${imgpath}] \n 压缩成功，原始大小-${obj.input.size}，压缩大小-${
-          //     obj.output.size
-          //   }，优化比例-${obj.output.ratio}`
-          // );
         });
       });
     });

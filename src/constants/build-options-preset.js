@@ -1,4 +1,10 @@
-export default {
+import { commonKeys, pageKeys, routerKeys } from '@/constants/compiler';
+
+const cmk = commonKeys;
+const pgk = pageKeys;
+const rtk = routerKeys;
+
+const presetConfig = {
   mpWechat: {
     title: '微信小程序',
     type: 'mpWechat',
@@ -14,20 +20,18 @@ export default {
       routerPath: 'app.json',
       routerTemplate: `{
   "pages": [
-    #start
-    "#pagePath/#name/#name",
-    #end
+    ${rtk.start}"${rtk.pagePath}/${cmk.name}/${cmk.name}"${rtk.end}
   ]
 }`,
       pagePath: 'pages',
       componentPath: 'components',
       files: [
         {
-          fileName: '#name.wxml',
-          template: `#html`
+          fileName: `${cmk.name}.wxml`,
+          template: `${pgk.html}`
         },
         {
-          fileName: '#name.js',
+          fileName: `${cmk.name}.js`,
           template: `Page({
   data: {},
   onLoad() {},
@@ -35,11 +39,11 @@ export default {
 })`
         },
         {
-          fileName: '#name.wxss',
-          template: `#css`
+          fileName: `${cmk.name}.wxss`,
+          template: `${pgk.css}`
         },
         {
-          fileName: '#name.json',
+          fileName: `${cmk.name}.json`,
           template: ``
         }
       ]
@@ -59,16 +63,14 @@ export default {
       imgPath: 'assets',
       routerPath: 'router/index.js',
       routerTemplate: `[
-  #start
-  {
-    path: '/#name',
-    name: '#name',
-    component: () => import('@/#pagePath/#name/#name'),
+  ${rtk.start}{
+    path: '/${cmk.name}',
+    name: '${cmk.name}',
+    component: () => import('@/${rtk.pagePath}/${cmk.name}/${cmk.name}'),
     meta: {
-      title: '#title'
+      title: '${cmk.title}'
     }
-  }
-  #end
+  }${rtk.end}
 ]`,
       pagePath: 'views',
       componentPath: 'components',
@@ -76,7 +78,7 @@ export default {
         {
           fileName: 'index.vue',
           template: `<template>
-  #html
+  ${pgk.html}
 </template>
 
 <script setup>
@@ -87,7 +89,7 @@ export default {
         },
         {
           fileName: 'index.css',
-          template: `#css`
+          template: `${pgk.css}`
         }
       ]
     }
@@ -106,12 +108,10 @@ export default {
       imgPath: 'assets',
       routerPath: 'router/index.js',
       routerTemplate: `[
-  #start
-  {
-    path: '/#name',
-    component: React.lazy(() => import("@/#pagePath/#name/index.js"))
-  }
-  #end
+  ${rtk.start}{
+    path: '/${cmk.name}',
+    component: React.lazy(() => import("@/${rtk.pagePath}/${cmk.name}/index.js"))
+  }${rtk.end}
 ]`,
       pagePath: 'pages',
       componentPath: 'components',
@@ -121,27 +121,31 @@ export default {
           template: `
 import React, { memo } from 'react';
 import StyleWrap from './style.js';
-export default memo(function #name(){
+const ${cmk.name__pascal} = memo(function ${cmk.name__pascal}(){
   return (
-    <>
-      #html
-    </>
+    <StyleWrap>
+      ${pgk.html}
+    </StyleWrap>
   )
-})`
+})
+export default ${cmk.name__pascal};
+`
         },
         {
           fileName: 'style.js',
           template: `import styled from 'styled-components';
-export default styled.div\`
-  #css
-\``
+const StyleWrap = styled.div\`
+  ${pgk.css}
+\`
+export default StyleWrap;
+`
         }
       ]
     }
   }
 }
 
-export const customConfigDefault = {
+const customConfigDefault = {
   title: "自定义",
   deletable: false,
   options: {
@@ -160,3 +164,9 @@ export const customConfigDefault = {
     files: [],
   },
 }
+
+export {
+  customConfigDefault
+}
+
+export default presetConfig;

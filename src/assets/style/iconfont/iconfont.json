@@ -6,6 +6,111 @@
   "description": "项目助手",
   "glyphs": [
     {
+      "icon_id": "14046407",
+      "name": "下降",
+      "font_class": "decline",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "10905625",
+      "name": "问号",
+      "font_class": "help",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "14151854",
+      "name": "全屏",
+      "font_class": "full-screen",
+      "unicode": "e634",
+      "unicode_decimal": 58932
+    },
+    {
+      "icon_id": "21284952",
+      "name": "退出全屏",
+      "font_class": "exit-full-screen",
+      "unicode": "e690",
+      "unicode_decimal": 59024
+    },
+    {
+      "icon_id": "141643",
+      "name": "error",
+      "font_class": "warning",
+      "unicode": "e727",
+      "unicode_decimal": 59175
+    },
+    {
+      "icon_id": "736735",
+      "name": "info",
+      "font_class": "info",
+      "unicode": "e6bc",
+      "unicode_decimal": 59068
+    },
+    {
+      "icon_id": "13519390",
+      "name": "error",
+      "font_class": "error",
+      "unicode": "e651",
+      "unicode_decimal": 58961
+    },
+    {
+      "icon_id": "13519497",
+      "name": "success",
+      "font_class": "success",
+      "unicode": "e66b",
+      "unicode_decimal": 58987
+    },
+    {
+      "icon_id": "1727422",
+      "name": "205设置",
+      "font_class": "setting-fill",
+      "unicode": "e8b8",
+      "unicode_decimal": 59576
+    },
+    {
+      "icon_id": "5387576",
+      "name": "箭头_列表展开",
+      "font_class": "arrow-down",
+      "unicode": "eb06",
+      "unicode_decimal": 60166
+    },
+    {
+      "icon_id": "5387571",
+      "name": "箭头_列表向右",
+      "font_class": "arrow-right",
+      "unicode": "eb03",
+      "unicode_decimal": 60163
+    },
+    {
+      "icon_id": "5387573",
+      "name": "箭头_列表收起",
+      "font_class": "arrow-up",
+      "unicode": "eb04",
+      "unicode_decimal": 60164
+    },
+    {
+      "icon_id": "5387574",
+      "name": "箭头_列表向左",
+      "font_class": "arrow-left",
+      "unicode": "eb05",
+      "unicode_decimal": 60165
+    },
+    {
+      "icon_id": "6488979",
+      "name": "清空",
+      "font_class": "clear-empty",
+      "unicode": "e62a",
+      "unicode_decimal": 58922
+    },
+    {
+      "icon_id": "1304889",
+      "name": "添加",
+      "font_class": "add",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
       "icon_id": "6160694",
       "name": "最小化",
       "font_class": "minimize",
